@@ -27,6 +27,17 @@ tester.run('member-naming-convention', rule, {
     'class Foo { public LARGE_BINARY_THRESHOLD = 1024; }',
     // Override methods are fine — name dictated by parent
     'class Bar extends Foo { override InternalRunAction() {} }',
+    // Excluded paths are skipped entirely
+    {
+      code: 'class Foo { public run() {} }',
+      options: [{ excludePaths: ['AICLI/'] }],
+      filename: 'packages/AI/AICLI/src/commands/run.ts',
+    },
+    {
+      code: 'class Foo { public executeAgent() {} }',
+      options: [{ excludePaths: ['A2AServer/', 'React/'] }],
+      filename: 'packages/AI/A2AServer/src/AgentOps.ts',
+    },
   ],
   invalid: [
     {
@@ -44,6 +55,13 @@ tester.run('member-naming-convention', rule, {
     {
       code: 'class Foo { private RunAction() {} }',
       errors: [{ messageId: 'privateShouldBeCamel' }],
+    },
+    // Non-excluded path still flags
+    {
+      code: 'class Foo { public loadData() {} }',
+      options: [{ excludePaths: ['AICLI/'] }],
+      filename: 'packages/MJCore/src/thing.ts',
+      errors: [{ messageId: 'publicShouldBePascal' }],
     },
   ],
 });

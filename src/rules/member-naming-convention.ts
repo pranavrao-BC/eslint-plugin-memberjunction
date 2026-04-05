@@ -30,21 +30,40 @@ function isOverrideOrAbstract(node: TSESTree.PropertyDefinition | TSESTree.Metho
   return node.override === true || ('abstract' in node && (node as { abstract?: boolean }).abstract === true);
 }
 
-export default createRule({
+type Options = [{
+  excludePaths?: string[];
+}];
+
+export default createRule<Options, 'publicShouldBePascal' | 'privateShouldBeCamel'>({
   name: 'member-naming-convention',
   meta: {
     type: 'suggestion',
     docs: {
-      description: 'Enforce PascalCase for public class members and camelCase for private/protected',
+      description: 'Enforce PascalCase for public class members and camelCase for private',
     },
     messages: {
       publicShouldBePascal: 'Public member "{{ name }}" should be PascalCase.',
       privateShouldBeCamel: 'private member "{{ name }}" should be camelCase.',
     },
-    schema: [],
+    schema: [
+      {
+        type: 'object',
+        properties: {
+          excludePaths: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Path substrings to exclude (e.g., "React/", "AICLI/", "A2AServer/"). Files matching any pattern are skipped.',
+          },
+        },
+        additionalProperties: false,
+      },
+    ],
   },
-  defaultOptions: [],
-  create(context) {
+  defaultOptions: [{}],
+  create(context, [options]) {
+    const excludePaths = options.excludePaths ?? [];
+    if (excludePaths.some((p) => context.filename.includes(p))) return {};
+
     function check(node: TSESTree.PropertyDefinition | TSESTree.MethodDefinition) {
       const name = getMemberName(node);
       if (!name || name.startsWith('_') || FRAMEWORK_METHODS.has(name)) return;

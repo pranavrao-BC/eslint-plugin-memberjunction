@@ -1,5 +1,16 @@
 /**
- * Recommended config — all rules as warnings.
+ * Packages that follow external conventions (React, oclif CLI, A2A protocol)
+ * where MJ's PascalCase naming doesn't apply.
+ */
+const EXTERNAL_CONVENTION_PATHS = [
+  'React/',
+  'AICLI/',
+  'A2AServer/',
+  'ComponentRegistryClientSDK/',
+];
+
+/**
+ * Recommended config — all rules as warnings, naming rule off by default.
  * Non-intrusive: won't block builds, won't red-squiggle existing code.
  * Devs opt in by adding this config to their eslint.config.
  */
@@ -9,7 +20,7 @@ export const recommended = {
     '@memberjunction/no-static-singleton': 'warn',
     '@memberjunction/no-entity-spread': 'warn',
     '@memberjunction/use-uuids-equal': 'warn',
-    '@memberjunction/member-naming-convention': 'warn',
+    '@memberjunction/member-naming-convention': 'off',
     '@memberjunction/no-ng-on-changes': 'warn',
     '@memberjunction/no-cross-package-reexport': 'warn',
     '@memberjunction/no-router-in-generic': 'warn',
@@ -21,8 +32,8 @@ export const recommended = {
 } as const;
 
 /**
- * Strict config — all rules as errors.
- * For CI enforcement on new code (e.g., via diff-aware linting).
+ * Strict config — all rules as errors, with external-convention packages excluded
+ * from the naming rule. For CI enforcement on new code (diff-aware).
  */
 export const strict = {
   rules: {
@@ -30,7 +41,7 @@ export const strict = {
     '@memberjunction/no-static-singleton': 'error',
     '@memberjunction/no-entity-spread': 'error',
     '@memberjunction/use-uuids-equal': 'error',
-    '@memberjunction/member-naming-convention': 'error',
+    '@memberjunction/member-naming-convention': ['error', { excludePaths: EXTERNAL_CONVENTION_PATHS }],
     '@memberjunction/no-ng-on-changes': 'error',
     '@memberjunction/no-cross-package-reexport': 'error',
     '@memberjunction/no-router-in-generic': 'error',
