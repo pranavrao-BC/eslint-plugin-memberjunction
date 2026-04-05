@@ -1,0 +1,56 @@
+{
+  "name": "@memberjunction/eslint-plugin",
+  "version": "0.1.0",
+  "description": "Linter suite for MemberJunction conventions — ESLint rules, Stylelint rules, SQL migration checks",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./stylelint": "./dist/stylelint/index.js",
+    "./sql": "./dist/sql/lint-migrations.js"
+  },
+  "bin": {
+    "mj-lint-sql": "./dist/sql/lint-migrations.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "eslint",
+    "eslintplugin",
+    "stylelint",
+    "memberjunction",
+    "typescript",
+    "conventions"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "eslint": ">=9.0.0",
+    "@typescript-eslint/parser": ">=8.0.0",
+    "stylelint": ">=16.0.0"
+  },
+  "peerDependenciesMeta": {
+    "stylelint": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "@typescript-eslint/utils": "^8.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2",
+    "@typescript-eslint/parser": "^8.0.0",
+    "@typescript-eslint/rule-tester": "^8.0.0",
+    "eslint": "^9.0.0",
+    "stylelint": "^16.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
