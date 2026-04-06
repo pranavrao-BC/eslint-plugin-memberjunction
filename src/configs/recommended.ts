@@ -29,6 +29,7 @@ export const recommended = {
     '@memberjunction/no-enum-prefer-union': 'warn',
     '@memberjunction/no-kendo-icons': 'warn',
     '@memberjunction/no-legacy-template-syntax': 'warn',
+    'max-lines-per-function': ['warn', { max: 40, skipBlankLines: true, skipComments: true }],
   },
 } as const;
 
@@ -51,5 +52,6 @@ export const strict = {
     '@memberjunction/no-enum-prefer-union': 'error',
     '@memberjunction/no-kendo-icons': 'error',
     '@memberjunction/no-legacy-template-syntax': 'error',
+    'max-lines-per-function': ['error', { max: 40, skipBlankLines: true, skipComments: true }],
   },
 } as const;

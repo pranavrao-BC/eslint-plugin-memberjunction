@@ -19,7 +19,7 @@ Detect constructor parameter injection in Angular components (`constructor(priva
 ### `@for-requires-track`
 Detect `@for` blocks in inline templates missing the `track` expression. Required by Angular and important for performance.
 
-## Low Priority (Config Only)
+## Done
 
-### `max-function-length`
-Not a custom rule — configure the built-in `max-lines-per-function` at ~40 lines in the `strict` config. CLAUDE.md says 30-40 lines max.
+### ~~`max-function-length`~~ — Added
+Configured built-in `max-lines-per-function` at 40 lines (skips blanks and comments) in both configs. warn in recommended, error in strict.
