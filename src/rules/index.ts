@@ -10,6 +10,10 @@ import noFieldsWithEntityObject from './no-fields-with-entity-object';
 import noEnumPreferUnion from './no-enum-prefer-union';
 import noKendoIcons from './no-kendo-icons';
 import noLegacyTemplateSyntax from './no-legacy-template-syntax';
+import noDirectEntityNew from './no-direct-entity-new';
+import noRunviewInLoop from './no-runview-in-loop';
+import runviewCheckSuccess from './runview-check-success';
+import entitySaveCheckResult from './entity-save-check-result';
 
 export const rules = {
   'no-entity-get-set': noEntityGetSet,
@@ -24,4 +28,8 @@ export const rules = {
   'no-enum-prefer-union': noEnumPreferUnion,
   'no-kendo-icons': noKendoIcons,
   'no-legacy-template-syntax': noLegacyTemplateSyntax,
+  'no-direct-entity-new': noDirectEntityNew,
+  'no-runview-in-loop': noRunviewInLoop,
+  'runview-check-success': runviewCheckSuccess,
+  'entity-save-check-result': entitySaveCheckResult,
 };

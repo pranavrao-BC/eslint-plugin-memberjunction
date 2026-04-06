@@ -1,15 +1,15 @@
 # Planned Rules
 
-## High Priority
+## ~~High Priority~~ — Done
 
-### `no-direct-entity-new`
-Detect `new XyzEntity()` — entities must be created via `md.GetEntityObject<T>('Entity Name')`. Direct instantiation bypasses the MJ class factory and registration system.
+### ~~`no-direct-entity-new`~~ — Added
+Detects `new XyzEntity()` — entities must be created via `md.GetEntityObject<T>('Entity Name')`. Includes IDE suggestion fix. Configurable `allowedClassNames` option.
 
-### `no-runview-in-loop`
-Detect `RunView` / `rv.RunView` calls inside `for`, `while`, `forEach`, or `.map()` bodies. Should batch with `RunViews` (plural) or load once and filter in memory.
+### ~~`no-runview-in-loop`~~ — Added
+Detects `RunView` calls inside `for`, `while`, `do...while`, `for...of`, `for...in`, `.forEach()`, `.map()`, `.filter()`, `.reduce()`, `.some()`, `.every()`, `.find()`, `.findIndex()`, `.flatMap()`. Covers `rv.RunView(...)`, `this.rv.RunView(...)`, and bare `RunView(...)`.
 
-### `runview-check-success`
-Detect `RunView` calls where the result's `.Success` property is never accessed. `RunView` doesn't throw — unchecked failures are silent bugs.
+### ~~`runview-check-success`~~ — Added
+Detects `RunView` calls where `.Success` is never checked. Handles: variable assignment, destructuring, expression statements, return statements, and results passed to helper functions.
 
 ## Medium Priority
 

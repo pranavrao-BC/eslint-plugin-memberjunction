@@ -16,7 +16,6 @@ const EXTERNAL_CONVENTION_PATHS = [
  */
 export const recommended = {
   rules: {
-    '@typescript-eslint/no-explicit-any': 'warn',
     '@memberjunction/no-entity-get-set': 'warn',
     '@memberjunction/no-static-singleton': 'warn',
     '@memberjunction/no-entity-spread': 'warn',
@@ -29,7 +28,10 @@ export const recommended = {
     '@memberjunction/no-enum-prefer-union': 'warn',
     '@memberjunction/no-kendo-icons': 'warn',
     '@memberjunction/no-legacy-template-syntax': 'warn',
-    'max-lines-per-function': ['warn', { max: 40, skipBlankLines: true, skipComments: true }],
+    '@memberjunction/no-direct-entity-new': 'warn',
+    '@memberjunction/no-runview-in-loop': 'warn',
+    '@memberjunction/runview-check-success': 'warn',
+    '@memberjunction/entity-save-check-result': 'warn',
   },
 } as const;
 
@@ -39,7 +41,6 @@ export const recommended = {
  */
 export const strict = {
   rules: {
-    '@typescript-eslint/no-explicit-any': 'error',
     '@memberjunction/no-entity-get-set': 'error',
     '@memberjunction/no-static-singleton': 'error',
     '@memberjunction/no-entity-spread': 'error',
@@ -52,6 +53,9 @@ export const strict = {
     '@memberjunction/no-enum-prefer-union': 'error',
     '@memberjunction/no-kendo-icons': 'error',
     '@memberjunction/no-legacy-template-syntax': 'error',
-    'max-lines-per-function': ['error', { max: 40, skipBlankLines: true, skipComments: true }],
+    '@memberjunction/no-direct-entity-new': 'error',
+    '@memberjunction/no-runview-in-loop': 'error',
+    '@memberjunction/runview-check-success': 'error',
+    '@memberjunction/entity-save-check-result': 'error',
   },
 } as const;
