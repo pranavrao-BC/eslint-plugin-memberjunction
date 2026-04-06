@@ -38,6 +38,16 @@ tester.run('member-naming-convention', rule, {
       options: [{ excludePaths: ['A2AServer/', 'React/'] }],
       filename: 'packages/AI/A2AServer/src/AgentOps.ts',
     },
+    // PascalCase public getters and setters
+    'class Foo { get Name() { return ""; } }',
+    'class Foo { set Name(v: string) {} }',
+    'class Foo { public get FirstName() { return ""; } }',
+    'class Foo { public set FirstName(v: string) {} }',
+    // Underscore-prefixed private getter (skipped)
+    'class Foo { private get _data() { return 0; } }',
+    // Computed property keys (skipped — getMemberName returns null)
+    'class Foo { [Symbol.iterator]() {} }',
+    'class Foo { ["complex"]() {} }',
   ],
   invalid: [
     {
@@ -61,6 +71,26 @@ tester.run('member-naming-convention', rule, {
       code: 'class Foo { public loadData() {} }',
       options: [{ excludePaths: ['AICLI/'] }],
       filename: 'packages/MJCore/src/thing.ts',
+      errors: [{ messageId: 'publicShouldBePascal' }],
+    },
+    // camelCase public getter → flagged
+    {
+      code: 'class Foo { get name() { return ""; } }',
+      errors: [{ messageId: 'publicShouldBePascal' }],
+    },
+    // camelCase public setter → flagged
+    {
+      code: 'class Foo { set name(v: string) {} }',
+      errors: [{ messageId: 'publicShouldBePascal' }],
+    },
+    // Explicit public camelCase getter
+    {
+      code: 'class Foo { public get firstName() { return ""; } }',
+      errors: [{ messageId: 'publicShouldBePascal' }],
+    },
+    // Explicit public camelCase setter
+    {
+      code: 'class Foo { public set firstName(v: string) {} }',
       errors: [{ messageId: 'publicShouldBePascal' }],
     },
   ],

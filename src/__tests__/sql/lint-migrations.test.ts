@@ -36,6 +36,19 @@ ALTER TRIGGER foo ON bar;
     const v = lintFile(f);
     expect(v.filter((x) => x.rule === 'no-mj-timestamps')).toHaveLength(0);
   });
+
+  it('ignores __mj_CreatedAt inside block comments', () => {
+    const f = writeSQL('ts_block.sql', `
+/*
+CREATE TABLE \${flyway:defaultSchema}.Foo (
+    __mj_CreatedAt DATETIMEOFFSET NOT NULL
+);
+*/
+SELECT 1;
+`);
+    const v = lintFile(f);
+    expect(v.filter((x) => x.rule === 'no-mj-timestamps')).toHaveLength(0);
+  });
 });
 
 describe('no-fk-indexes', () => {
@@ -107,6 +120,23 @@ SELECT 1;
     const v = lintFile(f);
     expect(v.filter((x) => x.rule === 'use-flyway-schema')).toHaveLength(0);
   });
+
+  it('ignores schema inside single-quoted strings', () => {
+    const f = writeSQL('schema_str.sql', `
+EXEC('INSERT INTO dbo.Foo (ID) VALUES (1)');
+`);
+    const v = lintFile(f);
+    expect(v.filter((x) => x.rule === 'use-flyway-schema')).toHaveLength(0);
+  });
+
+  it('ignores schema inside block comments', () => {
+    const f = writeSQL('schema_block.sql', `
+/* Reference: dbo.OldTable was the old name */
+SELECT 1;
+`);
+    const v = lintFile(f);
+    expect(v.filter((x) => x.rule === 'use-flyway-schema')).toHaveLength(0);
+  });
 });
 
 describe('no-newid', () => {
@@ -133,6 +163,33 @@ VALUES ('A1B2C3D4-E5F6-7890-ABCD-EF1234567890', 'Test');
 CREATE TABLE \${flyway:defaultSchema}.Foo (
     ID UNIQUEIDENTIFIER NOT NULL DEFAULT NEWSEQUENTIALID()
 );
+`);
+    const v = lintFile(f);
+    expect(v.filter((x) => x.rule === 'no-newid')).toHaveLength(0);
+  });
+
+  it('catches NEWID() far from INSERT (large column list)', () => {
+    const columns = Array.from({ length: 15 }, (_, i) => `Col${i}`);
+    const f = writeSQL('newid_far.sql', `
+INSERT INTO \${flyway:defaultSchema}.BigTable (
+    ${columns.join(',\n    ')}
+)
+VALUES (
+    ${columns.slice(0, -1).map((_, i) => `'val${i}'`).join(',\n    ')},
+    NEWID()
+);
+`);
+    const v = lintFile(f);
+    expect(v.filter((x) => x.rule === 'no-newid')).toHaveLength(1);
+  });
+
+  it('ignores NEWID() inside block comments', () => {
+    const f = writeSQL('newid_block.sql', `
+INSERT INTO \${flyway:defaultSchema}.Foo (ID, Name)
+/*
+VALUES (NEWID(), 'Test');
+*/
+VALUES ('AAAA-BBBB', 'Test');
 `);
     const v = lintFile(f);
     expect(v.filter((x) => x.rule === 'no-newid')).toHaveLength(0);

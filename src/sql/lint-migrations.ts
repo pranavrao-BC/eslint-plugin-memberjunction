@@ -92,8 +92,8 @@ const rules: LintRule[] = [
         const line = lines[i];
         // Skip comments
         if (/^\s*--/.test(line)) continue;
-        // Match bare schema prefixes like dbo. or __mj. not inside ${flyway:}
-        if (/\b(dbo|__mj)\.\w+/i.test(line) && !line.includes('${flyway:')) {
+        // Match bare schema prefixes like dbo. or __mj. not inside ${flyway:} or single-quoted strings
+        if (/\b(dbo|__mj)\.\w+/i.test(line) && !line.includes('${flyway:') && !/'.*(dbo|__mj)\.\w+.*'/i.test(line)) {
           const match = line.match(/\b(dbo|__mj)\./i);
           violations.push({
             file,
@@ -115,7 +115,7 @@ const rules: LintRule[] = [
         const line = lines[i];
         if (/^\s*--/.test(line)) continue;
         // NEWID() in INSERT statements (not in DEFAULT constraints which use NEWSEQUENTIALID)
-        if (/\bNEWID\s*\(\s*\)/i.test(line) && /INSERT\b/i.test(lines.slice(Math.max(0, i - 5), i + 1).join(' '))) {
+        if (/\bNEWID\s*\(\s*\)/i.test(line) && /INSERT\b/i.test(lines.slice(Math.max(0, i - 50), i + 1).join(' '))) {
           violations.push({
             file,
             line: i + 1,
@@ -129,9 +129,36 @@ const rules: LintRule[] = [
   },
 ];
 
+/** Strip block comments from lines, preserving line numbering. */
+function stripBlockComments(lines: string[]): string[] {
+  const result: string[] = [];
+  let inBlock = false;
+  for (const line of lines) {
+    let out = '';
+    let i = 0;
+    while (i < line.length) {
+      if (inBlock) {
+        const end = line.indexOf('*/', i);
+        if (end === -1) { i = line.length; break; }
+        i = end + 2;
+        inBlock = false;
+      } else {
+        const start = line.indexOf('/*', i);
+        if (start === -1) { out += line.slice(i); break; }
+        out += line.slice(i, start);
+        i = start + 2;
+        inBlock = true;
+      }
+    }
+    result.push(out);
+  }
+  return result;
+}
+
 function lintFile(filePath: string): Violation[] {
   const content = fs.readFileSync(filePath, 'utf-8');
-  const lines = content.split('\n');
+  const rawLines = content.split('\n');
+  const lines = stripBlockComments(rawLines);
   const filename = path.basename(filePath);
   return rules.flatMap((rule) => rule.check(lines, filename));
 }

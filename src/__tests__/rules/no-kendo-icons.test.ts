@@ -25,5 +25,19 @@ tester.run('no-kendo-icons', rule, {
       code: 'const tpl = `<span class="k-icon k-i-gear"></span>`;',
       errors: [{ messageId: 'useFA' }],
     },
+    // Class field with Kendo icon — exactly 1 error (no double-report)
+    {
+      code: 'class Foo { template = "k-icon k-i-close"; }',
+      errors: [{ messageId: 'useFA' }],
+    },
+    // Decorator object property — caught by Literal handler
+    {
+      code: `
+        class Foo {
+          render() { return '<span class="k-icon k-i-gear"></span>'; }
+        }
+      `,
+      errors: [{ messageId: 'useFA' }],
+    },
   ],
 });

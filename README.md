@@ -1,6 +1,6 @@
 # @memberjunction/eslint-plugin
 
-Linter for MemberJunction coding conventions. ESLint (12 rules), Stylelint (2 rules), SQL migration checks (4 rules). 119 tests.
+Linter for MemberJunction coding conventions. ESLint (12 rules), Stylelint (2 rules), SQL migration checks (4 rules). 176 tests.
 
 ## Quick Start
 
@@ -85,6 +85,6 @@ node /path/to/eslint-plugin-memberjunction/dist/sql/lint-migrations.js /path/to/
 ## Tests
 
 ```bash
-npm test        # run all 119 tests
+npm test        # run all 176 tests
 npm run test:watch  # watch mode
 ```

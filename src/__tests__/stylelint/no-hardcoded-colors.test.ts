@@ -52,6 +52,26 @@ describe('mj/no-hardcoded-colors', () => {
     expect(warnings).toHaveLength(1);
   });
 
+  it('flags hsl() colors', async () => {
+    const warnings = await lint('.foo { color: hsl(200, 50%, 50%); }');
+    expect(warnings).toHaveLength(1);
+  });
+
+  it('flags hsla() colors', async () => {
+    const warnings = await lint('.foo { color: hsla(200, 50%, 50%, 0.5); }');
+    expect(warnings).toHaveLength(1);
+  });
+
+  it('flags hardcoded hex in border shorthand', async () => {
+    const warnings = await lint('.foo { border: 1px solid #ccc; }');
+    expect(warnings).toHaveLength(1);
+  });
+
+  it('flags hardcoded color mixed with url()', async () => {
+    const warnings = await lint('.foo { background: url("img.png") #fff; }');
+    expect(warnings).toHaveLength(1);
+  });
+
   it('allows var() tokens', async () => {
     const warnings = await lint('.foo { color: var(--mj-text-primary); }');
     expect(warnings).toHaveLength(0);
@@ -80,6 +100,11 @@ describe('mj/no-hardcoded-colors', () => {
 
   it('ignores url() data URIs', async () => {
     const warnings = await lint('.foo { background: url("data:image/svg+xml,%23fff"); }');
+    expect(warnings).toHaveLength(0);
+  });
+
+  it('allows border shorthand with token', async () => {
+    const warnings = await lint('.foo { border: 1px solid var(--mj-border-default); }');
     expect(warnings).toHaveLength(0);
   });
 });

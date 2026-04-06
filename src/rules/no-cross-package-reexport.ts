@@ -2,7 +2,10 @@ import { createRule } from '../utils';
 import { AST_NODE_TYPES } from '@typescript-eslint/utils';
 import path from 'path';
 
-const INDEX_FILES = new Set(['index.ts', 'index.js', 'public-api.ts', 'public-api.js']);
+const INDEX_FILES = new Set([
+  'index.ts', 'index.js', 'index.mts', 'index.mjs', 'index.cts', 'index.cjs',
+  'public-api.ts', 'public-api.js', 'public-api.mts', 'public-api.mjs', 'public-api.cts', 'public-api.cjs',
+]);
 
 export default createRule({
   name: 'no-cross-package-reexport',

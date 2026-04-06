@@ -16,20 +16,37 @@ export default createRule({
   },
   defaultOptions: [],
   create(context) {
+    function getKeyName(prop: import('@typescript-eslint/utils').TSESTree.Property): string | null {
+      if (prop.key.type === AST_NODE_TYPES.Identifier) return prop.key.name;
+      if (prop.key.type === AST_NODE_TYPES.Literal && typeof prop.key.value === 'string') return prop.key.value;
+      return null;
+    }
+
+    function isEntityObjectValue(value: import('@typescript-eslint/utils').TSESTree.Expression): boolean {
+      if (value.type === AST_NODE_TYPES.Literal && value.value === 'entity_object') return true;
+      // Handle template literal: `entity_object`
+      if (
+        value.type === AST_NODE_TYPES.TemplateLiteral &&
+        value.quasis.length === 1 &&
+        value.expressions.length === 0 &&
+        value.quasis[0].value.cooked === 'entity_object'
+      ) return true;
+      return false;
+    }
+
     return {
       ObjectExpression(node) {
         let hasFields = false;
         let hasEntityObject = false;
 
         for (const prop of node.properties) {
-          if (prop.type !== AST_NODE_TYPES.Property || prop.key.type !== AST_NODE_TYPES.Identifier) continue;
+          if (prop.type !== AST_NODE_TYPES.Property) continue;
 
-          if (prop.key.name === 'Fields') hasFields = true;
-          if (
-            prop.key.name === 'ResultType' &&
-            prop.value.type === AST_NODE_TYPES.Literal &&
-            prop.value.value === 'entity_object'
-          ) {
+          const keyName = getKeyName(prop);
+          if (!keyName) continue;
+
+          if (keyName === 'Fields') hasFields = true;
+          if (keyName === 'ResultType' && isEntityObjectValue(prop.value as import('@typescript-eslint/utils').TSESTree.Expression)) {
             hasEntityObject = true;
           }
         }

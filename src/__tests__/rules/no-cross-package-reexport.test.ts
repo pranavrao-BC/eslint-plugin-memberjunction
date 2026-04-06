@@ -10,6 +10,8 @@ tester.run('no-cross-package-reexport', rule, {
     { code: "export * from './lib/module';", filename: 'index.ts' },
     // Non-index files can re-export (internal composition)
     { code: "export { Foo } from '@memberjunction/core';", filename: 'my-service.ts' },
+    // Local type re-export in index is fine
+    { code: "export type { Foo } from './local-types';", filename: 'index.ts' },
   ],
   invalid: [
     {
@@ -20,6 +22,18 @@ tester.run('no-cross-package-reexport', rule, {
     {
       code: "export * from '@memberjunction/core';",
       filename: 'index.ts',
+      errors: [{ messageId: 'noReexport' }],
+    },
+    // Type re-exports from MJ packages are also flagged
+    {
+      code: "export type { Metadata } from '@memberjunction/core';",
+      filename: 'index.ts',
+      errors: [{ messageId: 'noReexport' }],
+    },
+    // .mts extension coverage
+    {
+      code: "export * from '@memberjunction/global';",
+      filename: 'index.mts',
       errors: [{ messageId: 'noReexport' }],
     },
   ],
