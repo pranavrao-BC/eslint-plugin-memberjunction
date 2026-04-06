@@ -16,6 +16,7 @@ const EXTERNAL_CONVENTION_PATHS = [
  */
 export const recommended = {
   rules: {
+    '@typescript-eslint/no-explicit-any': 'warn',
     '@memberjunction/no-entity-get-set': 'warn',
     '@memberjunction/no-static-singleton': 'warn',
     '@memberjunction/no-entity-spread': 'warn',
@@ -37,6 +38,7 @@ export const recommended = {
  */
 export const strict = {
   rules: {
+    '@typescript-eslint/no-explicit-any': 'error',
     '@memberjunction/no-entity-get-set': 'error',
     '@memberjunction/no-static-singleton': 'error',
     '@memberjunction/no-entity-spread': 'error',
