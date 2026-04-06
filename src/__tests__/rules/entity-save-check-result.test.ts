@@ -39,9 +39,14 @@ tester.run('entity-save-check-result', rule, {
     `async function f() {
       const msg = await entity.Save() ? 'ok' : 'fail';
     }`,
-    // Not entity Save/Load — different method
+    // Delete result checked
     `async function f() {
-      await entity.Delete();
+      if (await entity.Delete()) { success(); }
+    }`,
+    // Delete result assigned
+    `async function f() {
+      const deleted = await entity.Delete();
+      if (!deleted) throw new Error('Delete failed');
     }`,
     // Not a member expression Save
     `async function f() {
@@ -92,6 +97,16 @@ tester.run('entity-save-check-result', rule, {
         }
       }`,
       errors: [{ messageId: 'uncheckedLoad' }],
+    },
+    // Delete result discarded
+    {
+      code: `async function f() { await entity.Delete(); }`,
+      errors: [{ messageId: 'uncheckedDelete' }],
+    },
+    // Delete without await
+    {
+      code: `function f() { entity.Delete(); }`,
+      errors: [{ messageId: 'uncheckedDelete' }],
     },
   ],
 });

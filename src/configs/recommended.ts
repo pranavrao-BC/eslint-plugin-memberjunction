@@ -32,6 +32,8 @@ export const recommended = {
     '@memberjunction/no-runview-in-loop': 'warn',
     '@memberjunction/runview-check-success': 'warn',
     '@memberjunction/entity-save-check-result': 'warn',
+    '@memberjunction/prefer-inject-function': 'warn',
+    '@memberjunction/for-requires-track': 'warn',
   },
 } as const;
 
@@ -57,5 +59,7 @@ export const strict = {
     '@memberjunction/no-runview-in-loop': 'error',
     '@memberjunction/runview-check-success': 'error',
     '@memberjunction/entity-save-check-result': 'error',
+    '@memberjunction/prefer-inject-function': 'error',
+    '@memberjunction/for-requires-track': 'error',
   },
 } as const;

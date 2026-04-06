@@ -14,6 +14,8 @@ import noDirectEntityNew from './no-direct-entity-new';
 import noRunviewInLoop from './no-runview-in-loop';
 import runviewCheckSuccess from './runview-check-success';
 import entitySaveCheckResult from './entity-save-check-result';
+import preferInjectFunction from './prefer-inject-function';
+import forRequiresTrack from './for-requires-track';
 
 export const rules = {
   'no-entity-get-set': noEntityGetSet,
@@ -32,4 +34,6 @@ export const rules = {
   'no-runview-in-loop': noRunviewInLoop,
   'runview-check-success': runviewCheckSuccess,
   'entity-save-check-result': entitySaveCheckResult,
+  'prefer-inject-function': preferInjectFunction,
+  'for-requires-track': forRequiresTrack,
 };

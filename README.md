@@ -1,6 +1,6 @@
 # @memberjunction/eslint-plugin
 
-Linter for MemberJunction coding conventions. ESLint (16 rules), Stylelint (2 rules), SQL migration checks (4 rules).
+Linter for MemberJunction coding conventions. ESLint (18 rules), Stylelint (2 rules), SQL migration checks (4 rules).
 
 ## Quick Start
 
@@ -44,7 +44,7 @@ node /path/to/eslint-plugin-memberjunction/dist/sql/lint-migrations.js /path/to/
 
 ## Rules
 
-### ESLint (16 rules)
+### ESLint (18 rules)
 
 | Rule | Default | What It Catches |
 |------|---------|----------------|
@@ -55,7 +55,9 @@ node /path/to/eslint-plugin-memberjunction/dist/sql/lint-migrations.js /path/to/
 | `no-direct-entity-new` | warn | `new XyzEntity()` — use `md.GetEntityObject<T>()` |
 | `no-runview-in-loop` | warn | `RunView` inside loops — use `RunViews` (plural) or preload |
 | `runview-check-success` | warn | Unchecked `.Success` on RunView results — silent failures |
-| `entity-save-check-result` | warn | Unchecked `entity.Save()`/`.Load()` return — silent failures |
+| `entity-save-check-result` | warn | Unchecked `entity.Save()`/`.Load()`/`.Delete()` return — silent failures |
+| `prefer-inject-function` | warn | Constructor DI in Angular — use `inject()` function instead |
+| `for-requires-track` | warn | `@for` blocks missing `track` expression |
 | `member-naming-convention` | **off** | Public must be PascalCase, private must be camelCase |
 | `no-ng-on-changes` | warn | `ngOnChanges`/`ngDoCheck` — use `@Input()` setters |
 | `no-cross-package-reexport` | warn | Re-exports from `@memberjunction/*` in index/public-api |
@@ -89,6 +91,6 @@ node /path/to/eslint-plugin-memberjunction/dist/sql/lint-migrations.js /path/to/
 ## Tests
 
 ```bash
-npm test        # run all 248 tests
+npm test        # run all 274 tests
 npm run test:watch  # watch mode
 ```

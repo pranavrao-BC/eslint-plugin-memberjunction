@@ -1,7 +1,7 @@
 import { createRule } from '../utils';
 import { AST_NODE_TYPES, TSESTree } from '@typescript-eslint/utils';
 
-const CHECKED_METHODS = new Set(['Save', 'Load']);
+const CHECKED_METHODS = new Set(['Save', 'Load', 'Delete']);
 
 /** Check if a CallExpression is entity.Save() or entity.Load(). */
 function isEntitySaveOrLoad(node: TSESTree.CallExpression): string | null {
@@ -15,19 +15,21 @@ function isEntitySaveOrLoad(node: TSESTree.CallExpression): string | null {
   return null;
 }
 
-export default createRule<[], 'uncheckedSave' | 'uncheckedLoad'>({
+export default createRule<[], 'uncheckedSave' | 'uncheckedLoad' | 'uncheckedDelete'>({
   name: 'entity-save-check-result',
   meta: {
     type: 'problem',
     docs: {
       description:
-        "Require checking the return value of entity.Save() and entity.Load() — they return boolean, not throw",
+        "Require checking the return value of entity.Save(), .Load(), and .Delete() — they return boolean, not throw",
     },
     messages: {
       uncheckedSave:
         'entity.Save() return value was not checked. Save returns false on failure instead of throwing — check the result or handle the error.',
       uncheckedLoad:
         'entity.Load() return value was not checked. Load returns false on failure instead of throwing — check the result or handle the error.',
+      uncheckedDelete:
+        'entity.Delete() return value was not checked. Delete returns false on failure instead of throwing — check the result or handle the error.',
     },
     schema: [],
   },
@@ -49,10 +51,8 @@ export default createRule<[], 'uncheckedSave' | 'uncheckedLoad'>({
 
         // ExpressionStatement: `await entity.Save();` — result discarded
         if (parent.type === AST_NODE_TYPES.ExpressionStatement) {
-          context.report({
-            node,
-            messageId: method === 'Save' ? 'uncheckedSave' : 'uncheckedLoad',
-          });
+          const messageId = method === 'Save' ? 'uncheckedSave' : method === 'Load' ? 'uncheckedLoad' : 'uncheckedDelete';
+          context.report({ node, messageId });
           return;
         }
 
