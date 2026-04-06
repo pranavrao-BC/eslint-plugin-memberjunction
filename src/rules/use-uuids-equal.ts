@@ -1,7 +1,10 @@
 import { createRule } from '../utils';
 import { AST_NODE_TYPES, TSESTree } from '@typescript-eslint/utils';
 
-const UUID_FIELD_PATTERN = /(?:^ID$|ID$|Id$|_id$|Uuid$|UUID$)/;
+// Match MJ entity UUID fields: uppercase ID suffix (UserID, EntityID),
+// standalone ID, or explicit UUID/Uuid suffix. Excludes lowercase Id
+// (tabId, logId, expandedLogId) which are typically UI state, not UUIDs.
+const UUID_FIELD_PATTERN = /(?:^ID$|[a-z]ID$|Uuid$|UUID$)/;
 
 type Options = [{
   additionalPatterns?: string[];

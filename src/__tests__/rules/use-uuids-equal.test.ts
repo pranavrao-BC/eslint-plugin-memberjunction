@@ -24,9 +24,14 @@ tester.run('use-uuids-equal', rule, {
       code: 'a.WidgetId === b.WidgetId;',
       options: [{ ignorePatterns: ['WidgetId'] }],
     },
+    // Lowercase Id fields are NOT UUIDs — these are UI state (tabId, logId, etc.)
+    'expandedLogId === logId;',
+    'activeTab.resourceRecordId === item.recordId;',
+    'wsTab.id === snapshot.tabId;',
+    'a.listId === b.listId;',
   ],
   invalid: [
-    // Strict equality with suggestion
+    // Uppercase ID fields — these are MJ entity UUID fields
     {
       code: "item.ID === targetId;",
       errors: [{
@@ -55,7 +60,7 @@ tester.run('use-uuids-equal', rule, {
         suggestions: [{ messageId: 'suggestUUIDsEqual', output: "UUIDsEqual(a.ConversationID, b.ConversationID);" }],
       }],
     },
-    // Loose equality — also flagged with suggestion
+    // Loose equality — also flagged
     {
       code: "a.ID == b.ID;",
       errors: [{
@@ -68,6 +73,22 @@ tester.run('use-uuids-equal', rule, {
       errors: [{
         messageId: 'useNegatedUUIDsEqual',
         suggestions: [{ messageId: 'suggestNegatedUUIDsEqual', output: "!UUIDsEqual(a.ID, b.ID);" }],
+      }],
+    },
+    // EntityID pattern
+    {
+      code: "a.EntityID === b.EntityID;",
+      errors: [{
+        messageId: 'useUUIDsEqual',
+        suggestions: [{ messageId: 'suggestUUIDsEqual', output: "UUIDsEqual(a.EntityID, b.EntityID);" }],
+      }],
+    },
+    // Standalone ID
+    {
+      code: "ID === otherID;",
+      errors: [{
+        messageId: 'useUUIDsEqual',
+        suggestions: [{ messageId: 'suggestUUIDsEqual', output: "UUIDsEqual(ID, otherID);" }],
       }],
     },
     // additionalPatterns matches custom fields

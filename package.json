@@ -30,6 +30,15 @@
     "typescript",
     "conventions"
   ],
+  "author": "Pranav Rao",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MemberJunction/eslint-plugin-memberjunction.git"
+  },
+  "homepage": "https://github.com/MemberJunction/eslint-plugin-memberjunction#readme",
+  "bugs": {
+    "url": "https://github.com/MemberJunction/eslint-plugin-memberjunction/issues"
+  },
   "license": "MIT",
   "peerDependencies": {
     "eslint": ">=9.0.0",
