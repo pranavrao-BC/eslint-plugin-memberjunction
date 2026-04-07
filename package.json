@@ -1,7 +1,7 @@
 {
   "name": "@memberjunction/eslint-plugin",
-  "version": "0.1.0",
-  "description": "Linter suite for MemberJunction conventions — ESLint rules, Stylelint rules, SQL migration checks",
+  "version": "0.2.0",
+  "description": "Linter suite for MemberJunction conventions — 23 ESLint rules, 2 Stylelint rules, 4 SQL migration checks",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

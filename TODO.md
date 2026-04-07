@@ -1,6 +1,8 @@
 # Implemented Rules
 
-21 ESLint rules + 2 Stylelint rules + 4 SQL checks. Configs also enable `@typescript-eslint/no-explicit-any`.
+23 ESLint rules + 2 Stylelint rules + 4 SQL checks. Configs also enable `@typescript-eslint/no-explicit-any`.
+
+Validated against the full MJ monorepo (2,381 files, 66 packages) — 337 true positive warnings, 0 false positives.
 
 ## Entity / Data Access
 
@@ -19,6 +21,8 @@
 | `no-runview-in-loop` | RunView inside loops (N+1 queries) |
 | `runview-check-success` | Unchecked `.Success` on RunView results |
 | `entity-save-check-result` | Unchecked `.Save()` / `.Load()` / `.Delete()` return values |
+| `no-promise-all-runview` | `Promise.all` with 2+ RunView calls — use `RunViews` (plural) for server batching |
+| `prefer-simple-result-type` | `ResultType: 'entity_object'` when results aren't mutated — use `'simple'` |
 
 ## Angular
 
@@ -51,10 +55,10 @@
 
 ## CLAUDE.md Coverage
 
-Compared against [MJ CLAUDE.md](https://github.com/MemberJunction/MJ/blob/next/CLAUDE.md) critical rules:
+Every lintable critical rule from [MJ CLAUDE.md](https://github.com/MemberJunction/MJ/blob/next/CLAUDE.md) is enforced:
 
+- [x] No `any` types (Critical #2)
 - [x] No `.Get()`/`.Set()` (Critical #2b)
-- [x] No `any` types (Critical #2) — via `@typescript-eslint/no-explicit-any` + `no-any-type`
 - [x] Modern template syntax (Critical #4)
 - [x] `inject()` over constructor DI (Critical #4)
 - [x] `@for` requires `track` (Critical #4)
@@ -66,8 +70,10 @@ Compared against [MJ CLAUDE.md](https://github.com/MemberJunction/MJ/blob/next/C
 - [x] UUID comparisons with `UUIDsEqual()`
 - [x] No `new XyzEntity()`
 - [x] No RunView in loops
+- [x] Use `RunViews` (plural) for batching
 - [x] Check RunView `.Success`
 - [x] Check `.Save()` / `.Load()` / `.Delete()` results
+- [x] Use `'simple'` for read-only queries
 
 ## Removed
 
