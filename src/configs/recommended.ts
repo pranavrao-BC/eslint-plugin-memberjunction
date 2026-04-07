@@ -37,6 +37,8 @@ export const recommended = {
     '@memberjunction/no-any-type': 'warn',
     '@memberjunction/no-action-call-action': 'warn',
     '@memberjunction/require-standalone-false': 'warn',
+    '@memberjunction/no-promise-all-runview': 'warn',
+    '@memberjunction/prefer-simple-result-type': 'warn',
     '@typescript-eslint/no-explicit-any': 'warn',
   },
 } as const;
@@ -68,6 +70,8 @@ export const strict = {
     '@memberjunction/no-any-type': 'error',
     '@memberjunction/no-action-call-action': 'error',
     '@memberjunction/require-standalone-false': 'error',
+    '@memberjunction/no-promise-all-runview': 'error',
+    '@memberjunction/prefer-simple-result-type': 'error',
     '@typescript-eslint/no-explicit-any': 'error',
   },
 } as const;

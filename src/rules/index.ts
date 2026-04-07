@@ -19,6 +19,8 @@ import forRequiresTrack from './for-requires-track';
 import noAnyType from './no-any-type';
 import noActionCallAction from './no-action-call-action';
 import requireStandaloneFalse from './require-standalone-false';
+import noPromiseAllRunview from './no-promise-all-runview';
+import preferSimpleResultType from './prefer-simple-result-type';
 
 export const rules = {
   'no-entity-get-set': noEntityGetSet,
@@ -42,4 +44,6 @@ export const rules = {
   'no-any-type': noAnyType,
   'no-action-call-action': noActionCallAction,
   'require-standalone-false': requireStandaloneFalse,
+  'no-promise-all-runview': noPromiseAllRunview,
+  'prefer-simple-result-type': preferSimpleResultType,
 };
