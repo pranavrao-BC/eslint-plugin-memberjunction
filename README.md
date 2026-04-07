@@ -4,104 +4,99 @@ Linter suite for MemberJunction conventions — **23 ESLint rules**, 2 Stylelint
 
 Validated against the full MJ monorepo (2,381 files) with zero false positives.
 
-## Installation
+## Quick Setup
+
+From your MJ repo root, run one command:
 
 ```bash
-npm install --save-dev @memberjunction/eslint-plugin @typescript-eslint/parser
+bash <(curl -s https://raw.githubusercontent.com/pranavrao-BC/eslint-plugin-memberjunction/main/setup-mj.sh)
 ```
 
-Or, for development against the repo directly:
+Or if you prefer to do it manually:
 
 ```bash
-git clone https://github.com/pranavrao-BC/eslint-plugin-memberjunction.git
-cd eslint-plugin-memberjunction
-npm install && npm run build
+# Clone the plugin next to your MJ repo
+git clone https://github.com/pranavrao-BC/eslint-plugin-memberjunction.git ../eslint-plugin-memberjunction
+cd ../eslint-plugin-memberjunction && npm install && npm run build && cd -
+
+# Link it into your MJ repo
+mkdir -p node_modules/@memberjunction
+ln -sf "$(pwd)/../eslint-plugin-memberjunction" node_modules/@memberjunction/eslint-plugin
 ```
 
-## Setup
+That's it. The setup script also drops a `.eslintrc.mj.cjs` config file for you.
 
-### ESLint 9+ (Flat Config)
+## Day-to-Day Workflows
 
-Create or update `eslint.config.mjs` in your project root:
+### Lint files you changed on your branch
 
-```js
-import tsParser from '@typescript-eslint/parser';
-import mjPlugin from '@memberjunction/eslint-plugin';
+The most useful command — only checks what you touched:
 
-export default [
-  {
-    files: ['**/*.ts'],
-    ignores: ['**/node_modules/**', '**/dist/**', '**/generated/**'],
-    languageOptions: {
-      parser: tsParser,
-      parserOptions: { ecmaVersion: 2022, sourceType: 'module' },
-    },
-    plugins: { '@memberjunction': mjPlugin },
-    rules: mjPlugin.configs.recommended.rules,  // or .strict.rules for CI
-  },
-];
+```bash
+npx eslint --no-eslintrc -c .eslintrc.mj.cjs $(git diff --name-only origin/next...HEAD -- '*.ts')
 ```
 
-### ESLint 8 (Legacy Config)
+### Lint your uncommitted changes
 
-Add to `.eslintrc.json`:
+Check files you've modified but haven't committed yet:
 
+```bash
+npx eslint --no-eslintrc -c .eslintrc.mj.cjs $(git diff --name-only -- '*.ts')
+```
+
+### Lint staged files (pre-commit)
+
+Only check what you're about to commit:
+
+```bash
+npx eslint --no-eslintrc -c .eslintrc.mj.cjs $(git diff --cached --name-only -- '*.ts')
+```
+
+### Lint a specific package
+
+```bash
+npx eslint --no-eslintrc -c .eslintrc.mj.cjs 'packages/MJServer/src/**/*.ts'
+```
+
+### Lint a single file
+
+```bash
+npx eslint --no-eslintrc -c .eslintrc.mj.cjs packages/MJCore/src/generic/providerBase.ts
+```
+
+### Lint everything (takes ~30s)
+
+```bash
+npx eslint --no-eslintrc -c .eslintrc.mj.cjs 'packages/**/src/**/*.ts' --ignore-pattern '**/generated/**' --ignore-pattern '**/__tests__/**'
+```
+
+## IDE Integration
+
+Once the plugin is linked into your `node_modules`, most editors pick it up automatically:
+
+**VS Code**: Install the [ESLint extension](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint). Add to `.vscode/settings.json`:
 ```json
 {
-  "parser": "@typescript-eslint/parser",
-  "plugins": ["@memberjunction"],
-  "extends": [],
-  "rules": {
-    "@memberjunction/no-entity-get-set": "warn",
-    "@memberjunction/no-static-singleton": "warn",
-    "@memberjunction/no-entity-spread": "warn",
-    "@memberjunction/use-uuids-equal": "warn",
-    "@memberjunction/no-direct-entity-new": "warn",
-    "@memberjunction/no-runview-in-loop": "warn",
-    "@memberjunction/runview-check-success": "warn",
-    "@memberjunction/entity-save-check-result": "warn",
-    "@memberjunction/no-promise-all-runview": "warn",
-    "@memberjunction/prefer-simple-result-type": "warn",
-    "@memberjunction/no-any-type": "warn",
-    "@memberjunction/no-action-call-action": "warn",
-    "@memberjunction/require-standalone-false": "warn",
-    "@memberjunction/prefer-inject-function": "warn",
-    "@memberjunction/for-requires-track": "warn",
-    "@memberjunction/no-ng-on-changes": "warn",
-    "@memberjunction/no-cross-package-reexport": "warn",
-    "@memberjunction/no-router-in-generic": "warn",
-    "@memberjunction/no-fields-with-entity-object": "warn",
-    "@memberjunction/no-enum-prefer-union": "warn",
-    "@memberjunction/no-kendo-icons": "warn",
-    "@memberjunction/no-legacy-template-syntax": "warn",
-    "@typescript-eslint/no-explicit-any": "warn"
-  }
+  "eslint.options": { "overrideConfigFile": ".eslintrc.mj.cjs" },
+  "eslint.validate": ["typescript"]
 }
 ```
 
-### Running Against the MJ Monorepo (Standalone)
+**JetBrains (WebStorm/IntelliJ)**: Settings → Languages & Frameworks → ESLint → Manual Configuration → point to `.eslintrc.mj.cjs`.
 
-If you haven't added the plugin to MJ's `package.json` yet, you can run it standalone using the bundled config:
+You'll see yellow squiggles inline as you code — hover for the fix suggestion.
 
-```bash
-cd /path/to/MJ
-ESLINT_USE_FLAT_CONFIG=true /path/to/eslint-plugin-memberjunction/node_modules/.bin/eslint \
-  --config /path/to/eslint-plugin-memberjunction/mj-lint.config.mjs \
-  "packages/**/src/**/*.ts" \
-  --no-error-on-unmatched-pattern
-```
-
-### Stylelint (CSS Design Tokens)
+## Stylelint (CSS Design Tokens)
 
 ```bash
 npx stylelint "packages/Angular/**/*.css" \
-  --config /path/to/eslint-plugin-memberjunction/mj-stylelint.config.mjs
+  --config ../eslint-plugin-memberjunction/mj-stylelint.config.mjs
 ```
 
-### SQL Migration Linter
+## SQL Migration Linter
 
 ```bash
-node /path/to/eslint-plugin-memberjunction/dist/sql/lint-migrations.js /path/to/MJ/migrations/v5/
+node ../eslint-plugin-memberjunction/dist/sql/lint-migrations.js migrations/v5/
 ```
 
 ## Configs
@@ -208,27 +203,20 @@ Every lintable critical rule from the [MJ CLAUDE.md](https://github.com/MemberJu
 
 ## CI Integration
 
-### GitHub Actions
+### GitHub Actions (diff-aware — only lint changed files)
 
 ```yaml
-- name: Lint TypeScript
-  run: npx eslint --config eslint.config.mjs "packages/**/src/**/*.ts" --no-error-on-unmatched-pattern
-
-- name: Lint CSS
-  run: npx stylelint "packages/Angular/**/*.css" --config mj-stylelint.config.mjs
-
-- name: Lint SQL Migrations
-  run: node node_modules/@memberjunction/eslint-plugin/dist/sql/lint-migrations.js migrations/v5/
+- name: Lint changed TypeScript files
+  run: |
+    CHANGED=$(git diff --name-only origin/next...HEAD -- '*.ts' | grep -v __tests__ | grep -v generated | tr '\n' ' ')
+    [ -n "$CHANGED" ] && npx eslint --no-eslintrc -c .eslintrc.mj.cjs $CHANGED --max-warnings 0
 ```
 
-### Diff-Aware Linting (New Code Only)
+### Full repo lint (for periodic audits)
 
-To lint only files changed in a PR (avoids noise from existing code):
-
-```bash
-# Get changed .ts files relative to main branch
-CHANGED=$(git diff --name-only origin/next...HEAD -- '*.ts' | tr '\n' ' ')
-[ -n "$CHANGED" ] && npx eslint $CHANGED
+```yaml
+- name: Lint all TypeScript
+  run: npx eslint --no-eslintrc -c .eslintrc.mj.cjs 'packages/**/src/**/*.ts' --ignore-pattern '**/generated/**' --ignore-pattern '**/__tests__/**'
 ```
 
 ## Tests
