@@ -5,6 +5,20 @@ const PASCAL_CASE = /^[A-Z][a-zA-Z0-9]*$/;
 const CAMEL_CASE = /^[a-z_$][a-zA-Z0-9$]*$/;
 const UPPER_SNAKE_CASE = /^[A-Z][A-Z0-9_]+$/;
 
+/** Convert a name to PascalCase: "userName" → "UserName", "user_name" → "UserName" */
+function toPascalCase(name: string): string {
+  return name
+    .replace(/^_+/, '')
+    .replace(/(^|[_-])([a-z])/g, (_, _sep, c: string) => c.toUpperCase())
+    .replace(/^([a-z])/, (_, c: string) => c.toUpperCase());
+}
+
+/** Convert a name to camelCase: "UserName" → "userName", "User_Name" → "userName" */
+function toCamelCase(name: string): string {
+  const pascal = toPascalCase(name);
+  return pascal.charAt(0).toLowerCase() + pascal.slice(1);
+}
+
 // Angular lifecycle hooks and known framework methods that must be camelCase
 const FRAMEWORK_METHODS = new Set([
   'ngOnInit', 'ngOnDestroy', 'ngOnChanges', 'ngDoCheck',
@@ -42,8 +56,8 @@ export default createRule<Options, 'publicShouldBePascal' | 'privateShouldBeCame
       description: 'Enforce PascalCase for public class members and camelCase for private',
     },
     messages: {
-      publicShouldBePascal: 'Public member "{{ name }}" should be PascalCase.',
-      privateShouldBeCamel: 'private member "{{ name }}" should be camelCase.',
+      publicShouldBePascal: 'Public member `{{ name }}` should be PascalCase (e.g., `{{ name }}` → `{{ expected }}`). MJ uses PascalCase for all public class members to match generated entity classes.',
+      privateShouldBeCamel: 'Private member `{{ name }}` should be camelCase (e.g., `{{ name }}` → `{{ expected }}`). MJ uses camelCase for private/protected members.',
     },
     schema: [
       {
@@ -78,7 +92,7 @@ export default createRule<Options, 'publicShouldBePascal' | 'privateShouldBeCame
       if (UPPER_SNAKE_CASE.test(name)) return;
 
       if (isPublic(node) && !node.static && !PASCAL_CASE.test(name)) {
-        context.report({ node: node.key, messageId: 'publicShouldBePascal', data: { name } });
+        context.report({ node: node.key, messageId: 'publicShouldBePascal', data: { name, expected: toPascalCase(name) } });
       }
 
       // Only enforce camelCase on private members — protected names are often
@@ -87,7 +101,7 @@ export default createRule<Options, 'publicShouldBePascal' | 'privateShouldBeCame
         context.report({
           node: node.key,
           messageId: 'privateShouldBeCamel',
-          data: { name },
+          data: { name, expected: toCamelCase(name) },
         });
       }
     }

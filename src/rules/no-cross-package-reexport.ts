@@ -16,7 +16,7 @@ export default createRule({
     },
     messages: {
       noReexport:
-        'Do not re-export from "{{ source }}". Consumers should import directly from that package.',
+        'Do not re-export from `{{ source }}` in this index/public-api file. Remove this export — consumers should `import { ... } from \'{{ source }}\'` directly. Re-exports create confusing dependency chains and hurt tree-shaking.',
     },
     schema: [],
   },

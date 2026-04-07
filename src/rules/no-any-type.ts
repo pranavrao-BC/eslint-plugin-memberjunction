@@ -141,7 +141,7 @@ export default createRule({
     },
     messages: {
       noLazyUnknown:
-        'Do not use `unknown` as a lazy alternative to proper typing. Use the specific type from MJ\'s type system.',
+        'Do not use `unknown` here. Replace with the actual type — check the entity class, interface, or function return type. If this is a generic data container, use `Record<string, string | number | boolean | null>` or define an interface.',
     },
     schema: [],
   },

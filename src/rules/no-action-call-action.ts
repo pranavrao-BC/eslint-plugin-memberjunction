@@ -64,7 +64,7 @@ export default createRule({
     },
     messages: {
       noActionCallAction:
-        'Do not call `{{method}}()` from within an Action. Import and use the underlying service class directly (e.g., AIPromptRunner, EmailService) for type safety and clarity.',
+        'Do not call `{{method}}()` from within an Action — this loses type safety and adds metadata-lookup overhead. Import the underlying package directly instead (e.g., `import { AIPromptRunner } from \'@memberjunction/ai-prompts\'`). Actions are system boundaries for agents/workflows, not for code-to-code calls.',
     },
     schema: [],
   },

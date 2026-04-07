@@ -9,8 +9,10 @@ export default createRule({
       description: 'Disallow ngOnChanges/ngDoCheck — use @Input() getter/setters instead',
     },
     messages: {
-      noOnChanges: 'Use @Input() getter/setters instead of ngOnChanges for change detection.',
-      noDoCheck: 'Use @Input() getter/setters instead of ngDoCheck for change detection.',
+      noOnChanges:
+        'Replace `ngOnChanges` with `@Input() set` getter/setters for each input you need to react to. Example: `@Input() set userId(value: string) { this.loadUser(value); }` — this is more explicit and avoids the untyped `SimpleChanges` map.',
+      noDoCheck:
+        'Replace `ngDoCheck` with `@Input() set` getter/setters for change detection. `ngDoCheck` runs on every change detection cycle and is a performance concern — `@Input()` setters only fire when the value actually changes.',
     },
     schema: [],
   },

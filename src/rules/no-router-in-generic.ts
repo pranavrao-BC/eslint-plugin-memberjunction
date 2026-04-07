@@ -10,7 +10,7 @@ export default createRule({
     },
     messages: {
       noRouter:
-        'Generic components must not import Router. Pass route-derived state via @Input() from the parent.',
+        'Generic components must not import `@angular/router` — they must remain route-agnostic so they work in any context. Remove this import and pass route-derived values (IDs, params) via `@Input()` from the parent component that owns the route.',
     },
     schema: [
       {

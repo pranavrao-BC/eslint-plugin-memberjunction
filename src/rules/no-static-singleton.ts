@@ -10,7 +10,7 @@ export default createRule({
     },
     messages: {
       useBaseSingleton:
-        'Manual singleton pattern detected. Extend BaseSingleton<T> from @memberjunction/global instead.',
+        'Manual singleton pattern detected. Extend `BaseSingleton<T>` from `@memberjunction/global` instead — it uses a global object store that survives bundler code splitting. Change to: `class {{className}} extends BaseSingleton<{{className}}> { protected constructor() { super(); } static get Instance(): {{className}} { return {{className}}.getInstance<{{className}}>(); } }`',
     },
     schema: [],
   },
@@ -23,7 +23,13 @@ export default createRule({
           node.key.type === AST_NODE_TYPES.Identifier &&
           /^_?instance$/i.test(node.key.name)
         ) {
-          context.report({ node, messageId: 'useBaseSingleton' });
+          // Walk up to find the class name
+          const classNode = node.parent?.parent;
+          const className =
+            classNode?.type === AST_NODE_TYPES.ClassDeclaration && classNode.id
+              ? classNode.id.name
+              : 'MyClass';
+          context.report({ node, messageId: 'useBaseSingleton', data: { className } });
         }
       },
     };

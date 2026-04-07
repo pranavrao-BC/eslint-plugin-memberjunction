@@ -11,7 +11,7 @@ export default createRule({
     },
     messages: {
       useFA:
-        'Replace Kendo icon class "{{ match }}" with a Font Awesome equivalent (e.g., fa-solid fa-times).',
+        'Replace Kendo icon class `{{ match }}` with a Font Awesome equivalent. Common mappings: k-i-close → fa-solid fa-xmark, k-i-check → fa-solid fa-check, k-i-plus → fa-solid fa-plus, k-i-edit → fa-solid fa-pen, k-i-delete → fa-solid fa-trash. See https://fontawesome.com/icons for the full catalog.',
     },
     schema: [],
   },
