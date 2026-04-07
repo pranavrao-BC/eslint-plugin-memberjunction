@@ -1,30 +1,79 @@
-# Planned Rules
+# Implemented Rules
 
-All planned rules have been implemented.
+21 ESLint rules + 2 Stylelint rules + 4 SQL checks. Configs also enable `@typescript-eslint/no-explicit-any`.
 
-## ~~High Priority~~ — Done
+## Entity / Data Access
 
-### ~~`no-direct-entity-new`~~ — Added
-Detects `new XyzEntity()` — entities must be created via `md.GetEntityObject<T>('Entity Name')`. Includes IDE suggestion fix. Configurable `allowedClassNames` option.
+| Rule | What it catches |
+|---|---|
+| `no-entity-get-set` | `.Get('field')` / `.Set('field', val)` — use typed properties |
+| `no-entity-spread` | `{ ...entity }` — use `.GetAll()` |
+| `no-direct-entity-new` | `new XyzEntity()` — use `md.GetEntityObject<T>()` |
+| `use-uuids-equal` | `===` on UUIDs — use `UUIDsEqual()` |
+| `no-fields-with-entity-object` | `Fields` param with `ResultType: 'entity_object'` (ignored by ProviderBase) |
 
-### ~~`no-runview-in-loop`~~ — Added
-Detects `RunView` calls inside `for`, `while`, `do...while`, `for...of`, `for...in`, `.forEach()`, `.map()`, `.filter()`, `.reduce()`, `.some()`, `.every()`, `.find()`, `.findIndex()`, `.flatMap()`. Covers `rv.RunView(...)`, `this.rv.RunView(...)`, and bare `RunView(...)`.
+## Performance / Correctness
 
-### ~~`runview-check-success`~~ — Added
-Detects `RunView` calls where `.Success` is never checked. Handles: variable assignment, destructuring, expression statements, return statements, and results passed to helper functions.
+| Rule | What it catches |
+|---|---|
+| `no-runview-in-loop` | RunView inside loops (N+1 queries) |
+| `runview-check-success` | Unchecked `.Success` on RunView results |
+| `entity-save-check-result` | Unchecked `.Save()` / `.Load()` / `.Delete()` return values |
 
-## ~~Medium Priority~~ — Done
+## Angular
 
-### ~~`prefer-inject-function`~~ — Added
-Detects constructor parameter injection in Angular components (`constructor(private foo: FooService)`). Recommends `inject()` function instead. Scoped to classes with Angular decorators (@Component, @Directive, @Injectable, @Pipe).
+| Rule | What it catches |
+|---|---|
+| `no-legacy-template-syntax` | `*ngIf` / `*ngFor` / `*ngSwitch` — use `@if` / `@for` / `@switch` |
+| `for-requires-track` | `@for` blocks missing `track` expression |
+| `prefer-inject-function` | Constructor DI — use `inject()` function |
+| `no-ng-on-changes` | `ngOnChanges` / `ngDoCheck` — use `@Input()` getters/setters |
+| `no-router-in-generic` | `@angular/router` imports in Generic/ components |
+| `require-standalone-false` | Missing explicit `standalone` on @Component/@Directive/@Pipe (Angular 19+ defaults to true) |
 
-### ~~`@for-requires-track`~~ — Added
-Detects `@for` blocks in inline templates missing the `track` expression. Required by Angular and important for performance.
+## Architecture / Code Style
 
-## Other Completed Rules
+| Rule | What it catches |
+|---|---|
+| `no-static-singleton` | Manual `static _instance` — use `BaseSingleton<T>` |
+| `no-cross-package-reexport` | Re-exporting from `@memberjunction/*` in index files |
+| `no-enum-prefer-union` | `enum` declarations — prefer union types |
+| `no-kendo-icons` | Kendo icon classes — use Font Awesome |
+| `member-naming-convention` | PascalCase public / camelCase private (off by default) |
 
-### ~~`entity-save-check-result`~~ — Added
-Detects unchecked return values from `entity.Save()`, `entity.Load()`, and `entity.Delete()`. These methods return boolean on failure instead of throwing.
+## Type Safety
 
-### ~~`max-function-length`~~ — Removed
-Was configured as built-in `max-lines-per-function` at 40 lines. Removed from configs because it generated 2,163 noise warnings (69% of total output) that buried real findings.
+| Rule | What it catches |
+|---|---|
+| `no-any-type` | Lazy `unknown` usage (exempts system boundaries: params, returns, catch, generics, type sigs) |
+| `no-action-call-action` | `this.executeAction()` inside Action subclasses — use underlying services directly |
+| *`@typescript-eslint/no-explicit-any`* | All `any` usage (`: any`, `as any`, `<any>`) — enabled in both configs |
+
+## CLAUDE.md Coverage
+
+Compared against [MJ CLAUDE.md](https://github.com/MemberJunction/MJ/blob/next/CLAUDE.md) critical rules:
+
+- [x] No `.Get()`/`.Set()` (Critical #2b)
+- [x] No `any` types (Critical #2) — via `@typescript-eslint/no-explicit-any` + `no-any-type`
+- [x] Modern template syntax (Critical #4)
+- [x] `inject()` over constructor DI (Critical #4)
+- [x] `@for` requires `track` (Critical #4)
+- [x] No `ngOnChanges` (Critical #4)
+- [x] Explicit `standalone` on components (Critical #4)
+- [x] No re-exports between packages (Critical #5)
+- [x] Use `BaseSingleton` (Critical #7)
+- [x] No Action calling Action (Actions design)
+- [x] UUID comparisons with `UUIDsEqual()`
+- [x] No `new XyzEntity()`
+- [x] No RunView in loops
+- [x] Check RunView `.Success`
+- [x] Check `.Save()` / `.Load()` / `.Delete()` results
+
+## Removed
+
+- ~~`max-lines-per-function`~~ — Generated 2,163 noise warnings (69% of output). Removed.
+
+## Possible Future Rules
+
+- **`no-circular-import-workaround`** — Detect `unknown` used to avoid circular imports (comment pattern `// avoids circular import`). Low priority; most cases are in integration engine infrastructure.
+- **`require-register-class`** — Detect entity/action subclasses missing `@RegisterClass` decorator. Would need heuristics for which classes need it.
