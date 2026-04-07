@@ -16,6 +16,9 @@ import runviewCheckSuccess from './runview-check-success';
 import entitySaveCheckResult from './entity-save-check-result';
 import preferInjectFunction from './prefer-inject-function';
 import forRequiresTrack from './for-requires-track';
+import noAnyType from './no-any-type';
+import noActionCallAction from './no-action-call-action';
+import requireStandaloneFalse from './require-standalone-false';
 
 export const rules = {
   'no-entity-get-set': noEntityGetSet,
@@ -36,4 +39,7 @@ export const rules = {
   'entity-save-check-result': entitySaveCheckResult,
   'prefer-inject-function': preferInjectFunction,
   'for-requires-track': forRequiresTrack,
+  'no-any-type': noAnyType,
+  'no-action-call-action': noActionCallAction,
+  'require-standalone-false': requireStandaloneFalse,
 };

@@ -34,6 +34,10 @@ export const recommended = {
     '@memberjunction/entity-save-check-result': 'warn',
     '@memberjunction/prefer-inject-function': 'warn',
     '@memberjunction/for-requires-track': 'warn',
+    '@memberjunction/no-any-type': 'warn',
+    '@memberjunction/no-action-call-action': 'warn',
+    '@memberjunction/require-standalone-false': 'warn',
+    '@typescript-eslint/no-explicit-any': 'warn',
   },
 } as const;
 
@@ -61,5 +65,9 @@ export const strict = {
     '@memberjunction/entity-save-check-result': 'error',
     '@memberjunction/prefer-inject-function': 'error',
     '@memberjunction/for-requires-track': 'error',
+    '@memberjunction/no-any-type': 'error',
+    '@memberjunction/no-action-call-action': 'error',
+    '@memberjunction/require-standalone-false': 'error',
+    '@typescript-eslint/no-explicit-any': 'error',
   },
 } as const;
