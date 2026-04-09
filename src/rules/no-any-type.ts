@@ -119,6 +119,9 @@ function isAllowedContext(node: TSESTree.TSUnknownKeyword): boolean {
     // Method definition — unknown in a method context is fine
     if (p.type === AST_NODE_TYPES.MethodDefinition) return true;
 
+    // Type assertion reached via wrapper: `as unknown[]`, `as unknown as T`
+    if (p.type === AST_NODE_TYPES.TSAsExpression) return true;
+
     // Interface/type property — these define data contracts where unknown
     // is appropriate for arbitrary JSON values, tool results, etc.
     if (p.type === AST_NODE_TYPES.TSPropertySignature) return true;

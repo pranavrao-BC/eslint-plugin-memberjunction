@@ -12,12 +12,10 @@ import { AST_NODE_TYPES, TSESTree } from '@typescript-eslint/utils';
  * Flagged:
  *  - `new RunView()` with no constructor argument (falls back to global)
  *  - `Metadata.Provider` / `RunView.Provider` reads (accessing the global)
- *  - `.GetEntityObject()` calls missing the provider argument (3rd param)
  *
  * Not flagged:
  *  - `new RunView(provider)` — provider passed to constructor
  *  - `Metadata.Provider = ...` — initialization/assignment is fine
- *  - `.GetEntityObject(name, user, provider)` — provider present
  *
  * Scope this rule to server-side packages in your ESLint config using the
  * `files` key — it should not apply to Angular/client code where the
@@ -37,8 +35,6 @@ export default createRule({
         'Pass the request-scoped provider to the RunView constructor: `new RunView(provider)`. Without it, RunView falls back to the global provider which is not request-safe on the server.',
       noGlobalProviderAccess:
         'Do not read the global `{{ className }}.Provider` — use the request-scoped provider from the resolver context or `ExecuteAgentParams.provider`.',
-      missingProviderArg:
-        '`{{ method }}` is missing the provider argument. Pass the request-scoped provider to avoid using the global connection: `.{{ method }}(..., provider)`.',
     },
     schema: [],
   },
@@ -80,21 +76,6 @@ export default createRule({
         }
       },
 
-      CallExpression(node) {
-        if (
-          node.callee.type === AST_NODE_TYPES.MemberExpression &&
-          !node.callee.computed &&
-          node.callee.property.type === AST_NODE_TYPES.Identifier &&
-          node.callee.property.name === 'GetEntityObject' &&
-          node.arguments.length < 3
-        ) {
-          context.report({
-            node,
-            messageId: 'missingProviderArg',
-            data: { method: 'GetEntityObject' },
-          });
-        }
-      },
     };
   },
 });

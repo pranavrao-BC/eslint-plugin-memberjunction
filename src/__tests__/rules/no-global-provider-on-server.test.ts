@@ -20,14 +20,10 @@ tester.run('no-global-provider-on-server', rule, {
     'const x = RunView.prototype;',
     'Metadata.SomethingElse;',
 
-    // --- GetEntityObject with provider (3+ args) ---
-    'md.GetEntityObject("Foo", user, provider);',
-    'this.md.GetEntityObject("Foo", user, ctx.provider);',
-    'metadata.GetEntityObject("Entity", contextUser, params.provider);',
-
-    // --- Other methods not checked ---
-    'md.SomeOtherMethod();',
-    'md.GetEntity("Foo");',
+    // --- GetEntityObject calls are not checked (provider is the receiver in MJ) ---
+    'provider.GetEntityObject("Foo", user);',
+    'md.GetEntityObject("Foo", user);',
+    'this.md.GetEntityObject("Foo", user, extra);',
 
     // --- Other class constructors not checked ---
     'new SomeOtherClass();',
@@ -62,20 +58,6 @@ tester.run('no-global-provider-on-server', rule, {
     {
       code: 'const p = RunView.Provider;',
       errors: [{ messageId: 'noGlobalProviderAccess' }],
-    },
-
-    // --- GetEntityObject without provider ---
-    {
-      code: 'md.GetEntityObject("Foo", user);',
-      errors: [{ messageId: 'missingProviderArg' }],
-    },
-    {
-      code: 'this.md.GetEntityObject("Foo", user);',
-      errors: [{ messageId: 'missingProviderArg' }],
-    },
-    {
-      code: 'md.GetEntityObject("Foo");',
-      errors: [{ messageId: 'missingProviderArg' }],
     },
   ],
 });

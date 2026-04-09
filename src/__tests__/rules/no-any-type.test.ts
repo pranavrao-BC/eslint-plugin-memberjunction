@@ -29,6 +29,10 @@ tester.run('no-any-type', rule, {
     // as unknown single cast
     'const x = foo as unknown;',
 
+    // as unknown[] — array type inside assertion
+    'const rows = data as unknown[];',
+    'const items = result as unknown[][];',
+
     // Function parameters (system boundary input)
     'function handle(input: unknown): string { return String(input); }',
     'const fn = (data: unknown) => {};',

@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-memberjunction",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "ESLint plugin for MemberJunction conventions — 25 rules for entity access, RunView patterns, Angular, type safety, and architecture",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
