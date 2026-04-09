@@ -48,6 +48,9 @@ tester.run('member-naming-convention', rule, {
     // Computed property keys (skipped — getMemberName returns null)
     'class Foo { [Symbol.iterator]() {} }',
     'class Foo { ["complex"]() {} }',
+    // RxJS observable $ suffix is allowed
+    'class Foo { public DataChange$: Observable<any> = new Subject(); }',
+    'class Foo { public TransactionNotifications$: Subject<string> = new Subject(); }',
   ],
   invalid: [
     {

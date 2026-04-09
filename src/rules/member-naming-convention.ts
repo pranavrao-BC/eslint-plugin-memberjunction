@@ -1,7 +1,7 @@
 import { createRule } from '../utils';
 import { AST_NODE_TYPES, TSESTree } from '@typescript-eslint/utils';
 
-const PASCAL_CASE = /^[A-Z][a-zA-Z0-9]*$/;
+const PASCAL_CASE = /^[A-Z][a-zA-Z0-9]*\$?$/;
 const CAMEL_CASE = /^[a-z_$][a-zA-Z0-9$]*$/;
 const UPPER_SNAKE_CASE = /^[A-Z][A-Z0-9_]+$/;
 

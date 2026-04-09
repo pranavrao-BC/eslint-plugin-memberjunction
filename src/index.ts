@@ -4,7 +4,7 @@ import { recommended, strict } from './configs/recommended';
 const plugin = {
   meta: {
     name: 'eslint-plugin-memberjunction',
-    version: '0.3.0',
+    version: '0.3.1',
   },
   rules,
   configs: {} as Record<string, unknown>,

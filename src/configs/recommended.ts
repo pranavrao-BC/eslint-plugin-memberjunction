@@ -10,8 +10,8 @@ const EXTERNAL_CONVENTION_PATHS = [
 ];
 
 /**
- * Recommended config — all rules as warnings, naming rule off by default.
- * Non-intrusive: won't block builds, won't red-squiggle existing code.
+ * Recommended config — all rules as warnings.
+ * Non-intrusive: won't block builds.
  * Devs opt in by adding this config to their eslint.config.
  */
 export const recommended = {
@@ -20,7 +20,7 @@ export const recommended = {
     'memberjunction/no-static-singleton': 'warn',
     'memberjunction/no-entity-spread': 'warn',
     'memberjunction/use-uuids-equal': 'warn',
-    'memberjunction/member-naming-convention': 'off',
+    'memberjunction/member-naming-convention': 'warn',
     'memberjunction/no-ng-on-changes': 'warn',
     'memberjunction/no-cross-package-reexport': 'warn',
     'memberjunction/no-router-in-generic': 'warn',
