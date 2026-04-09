@@ -24,6 +24,16 @@ tester.run('use-uuids-equal', rule, {
       code: 'a.WidgetId === b.WidgetId;',
       options: [{ ignorePatterns: ['WidgetId'] }],
     },
+    // String literal comparisons — case is known at write-time
+    "entity.ResourceRecordID === 'DataExplorer';",
+    "agentSpec.ID === '';",
+    "stepSpec.PromptID !== '';",
+    "entity.UserID === '550e8400-e29b-41d4-a716-446655440000';",
+
+    // NormalizeUUID() already applied — already case-safe
+    'NormalizeUUID(row.TagAID) === normalizedTagID;',
+    'normalizedUserID === NormalizeUUID(perm.UserID);',
+
     // Lowercase Id fields are NOT UUIDs — these are UI state (tabId, logId, etc.)
     'expandedLogId === logId;',
     'activeTab.resourceRecordId === item.recordId;',

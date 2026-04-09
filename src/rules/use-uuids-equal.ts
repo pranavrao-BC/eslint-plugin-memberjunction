@@ -34,14 +34,23 @@ function looksLikeUuidField(
   return extraPatterns.some((p) => p.test(name));
 }
 
-function isNullUndefinedOrNumeric(node: TSESTree.Expression): boolean {
-  if (node.type === AST_NODE_TYPES.Literal) {
-    return node.value === null || typeof node.value === 'number';
-  }
-  if (node.type === AST_NODE_TYPES.Identifier) {
-    return node.name === 'undefined';
-  }
+/** Suppress when either operand is a compile-time known value — case is
+ *  fixed at write-time so there's no cross-platform risk. */
+function isLiteralOrUndefined(node: TSESTree.Expression): boolean {
+  if (node.type === AST_NODE_TYPES.Literal) return true;
+  if (node.type === AST_NODE_TYPES.Identifier && node.name === 'undefined') return true;
+  // Template literals with no expressions: `some-string`
+  if (node.type === AST_NODE_TYPES.TemplateLiteral && node.expressions.length === 0) return true;
   return false;
+}
+
+/** Suppress when NormalizeUUID() is already applied — already case-safe. */
+function isNormalizeUUIDCall(node: TSESTree.Expression): boolean {
+  return (
+    node.type === AST_NODE_TYPES.CallExpression &&
+    node.callee.type === AST_NODE_TYPES.Identifier &&
+    node.callee.name === 'NormalizeUUID'
+  );
 }
 
 export default createRule<Options, 'useUUIDsEqual' | 'useNegatedUUIDsEqual' | 'suggestUUIDsEqual' | 'suggestNegatedUUIDsEqual'>({
@@ -91,8 +100,11 @@ export default createRule<Options, 'useUUIDsEqual' | 'useNegatedUUIDsEqual' | 's
           node.operator !== '==' && node.operator !== '!='
         ) return;
 
-        // Don't flag null/undefined/numeric comparisons
-        if (isNullUndefinedOrNumeric(node.left) || isNullUndefinedOrNumeric(node.right)) return;
+        // Don't flag literal comparisons — case is known at write-time
+        if (isLiteralOrUndefined(node.left) || isLiteralOrUndefined(node.right)) return;
+
+        // Don't flag NormalizeUUID() — already case-normalized
+        if (isNormalizeUUIDCall(node.left) || isNormalizeUUIDCall(node.right)) return;
 
         const leftMatch = looksLikeUuidField(node.left, extraPatterns, ignoreSet);
         const rightMatch = looksLikeUuidField(node.right, extraPatterns, ignoreSet);

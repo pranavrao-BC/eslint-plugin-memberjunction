@@ -10,48 +10,32 @@ From your MJ repo root:
 
 ```bash
 # 1. Install (one-time)
-npm install eslint-plugin-memberjunction @typescript-eslint/parser --save-dev
+npm install eslint-plugin-memberjunction --save-dev
 
-# 2. Create config (one-time) — paste this into eslint.config.mjs at repo root
-cat > eslint.config.mjs << 'EOF'
-import mj from 'eslint-plugin-memberjunction';
-import tsParser from '@typescript-eslint/parser';
-
-export default [
-  mj.configs.recommended,
-  {
-    files: ['packages/**/src/**/*.ts'],
-    languageOptions: {
-      parser: tsParser,
-      parserOptions: { ecmaVersion: 2022, sourceType: 'module' },
-    },
-  },
-  {
-    ignores: ['**/node_modules/**', '**/dist/**', '**/generated/**', '**/__tests__/**', '**/*.d.ts'],
-  },
-];
-EOF
-
-# 3. Lint the files you changed on your branch
-npx eslint $(git diff --name-only origin/next...HEAD -- '*.ts')
+# 2. Lint the files you changed on your branch
+npx eslint --no-eslintrc -c node_modules/eslint-plugin-memberjunction/eslintrc.mj.json \
+  $(git diff --name-only origin/next...HEAD | grep '\.ts$' | while read f; do [ -f "$f" ] && echo "$f"; done)
 ```
 
-That last command is the one you'll use day-to-day — it only lints files you touched, so you see exactly what to fix before opening a PR.
+That's it — the config ships with the package. No files to create, no setup to maintain.
 
 ### Other useful commands
 
 ```bash
+# Shorthand — save as an alias or npm script
+MJ_LINT="npx eslint --no-eslintrc -c node_modules/eslint-plugin-memberjunction/eslintrc.mj.json"
+
 # Lint uncommitted changes
-npx eslint $(git diff --name-only -- '*.ts')
+$MJ_LINT $(git diff --name-only -- '*.ts' | while read f; do [ -f "$f" ] && echo "$f"; done)
 
 # Lint a specific package
-npx eslint 'packages/MJServer/src/**/*.ts'
+$MJ_LINT 'packages/MJServer/src/**/*.ts'
 
 # Lint a single file
-npx eslint packages/MJCore/src/generic/baseEntity.ts
+$MJ_LINT packages/MJCore/src/generic/baseEntity.ts
 
 # Lint everything (~30s)
-npx eslint 'packages/**/src/**/*.ts'
+$MJ_LINT 'packages/**/src/**/*.ts'
 ```
 
 ### IDE integration
