@@ -3,14 +3,19 @@ import { recommended, strict } from './configs/recommended';
 
 const plugin = {
   meta: {
-    name: '@memberjunction/eslint-plugin',
-    version: '0.2.0',
+    name: 'eslint-plugin-memberjunction',
+    version: '0.3.0',
   },
   rules,
-  configs: {
-    recommended,
-    strict,
-  },
+  configs: {} as Record<string, unknown>,
+};
+
+// Self-contained flat configs — users can spread directly:
+//   import mj from 'eslint-plugin-memberjunction';
+//   export default [mj.configs.recommended];
+plugin.configs = {
+  recommended: { plugins: { memberjunction: plugin }, ...recommended },
+  strict: { plugins: { memberjunction: plugin }, ...strict },
 };
 
 export = plugin;
