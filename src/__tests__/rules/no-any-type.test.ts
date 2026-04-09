@@ -62,6 +62,14 @@ tester.run('no-any-type', rule, {
     // Generic type parameter defaults
     'function load<T = unknown>(id: string): T { return null as T; }',
     'class Store<T = unknown> { items: T[] = []; }',
+
+    // JSON.parse() return — unknown is the correct type for parsed JSON
+    'let parsed: unknown = JSON.parse(rawData);',
+    'const data: unknown = JSON.parse(response.body);',
+
+    // Interface/type properties — data contract boundaries
+    'interface ToolResult { success: boolean; data: unknown; }',
+    'type JsonObject = { value: unknown; metadata: string; };',
   ],
   invalid: [
     // Local variable typed unknown — lazy
@@ -72,11 +80,6 @@ tester.run('no-any-type', rule, {
     // Class property typed unknown — lazy
     {
       code: 'class Foo { data: unknown; }',
-      errors: [{ messageId: 'noLazyUnknown' }],
-    },
-    // Interface property typed unknown (not an index signature)
-    {
-      code: 'interface Bad { payload: unknown; }',
       errors: [{ messageId: 'noLazyUnknown' }],
     },
     // Type alias

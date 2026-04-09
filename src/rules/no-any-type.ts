@@ -17,12 +17,13 @@ import { AST_NODE_TYPES, TSESTree } from '@typescript-eslint/utils';
  *  - Function/method return types (these are part of the function's contract)
  *  - Function type / constructor type signatures: `as (x: unknown) => T`
  *  - Interface/type method signatures: `Get(key: string): unknown`
+ *  - Interface/type properties: `{ data: unknown }` (data contract boundaries)
+ *  - Variables initialized with JSON.parse(): `let parsed: unknown = JSON.parse(...)`
  *
  * Flagged:
- *  - `const x: unknown = ...` (local variable)
+ *  - `const x: unknown = expr` (local variable, unless initialized with JSON.parse)
  *  - Class property typed `unknown`
  *  - Type alias `type X = unknown`
- *  - Interface property (non-method, non-index) typed `unknown`
  */
 
 const FUNCTION_LIKE = new Set([
@@ -118,6 +119,27 @@ function isAllowedContext(node: TSESTree.TSUnknownKeyword): boolean {
     // Method definition — unknown in a method context is fine
     if (p.type === AST_NODE_TYPES.MethodDefinition) return true;
 
+    // Interface/type property — these define data contracts where unknown
+    // is appropriate for arbitrary JSON values, tool results, etc.
+    if (p.type === AST_NODE_TYPES.TSPropertySignature) return true;
+
+    // Variable initialized with JSON.parse() — unknown is the correct type
+    // since the parsed shape is genuinely unknowable at compile time
+    if (p.type === AST_NODE_TYPES.VariableDeclarator) {
+      const decl = p as TSESTree.VariableDeclarator;
+      if (
+        decl.init?.type === AST_NODE_TYPES.CallExpression &&
+        decl.init.callee.type === AST_NODE_TYPES.MemberExpression &&
+        decl.init.callee.object.type === AST_NODE_TYPES.Identifier &&
+        decl.init.callee.object.name === 'JSON' &&
+        decl.init.callee.property.type === AST_NODE_TYPES.Identifier &&
+        decl.init.callee.property.name === 'parse'
+      ) {
+        return true;
+      }
+      break;
+    }
+
     // Keep walking through transparent type/param wrappers
     if (isTypeWrapper(p.type) || isParamWrapper(p.type)) {
       current = p.parent;
@@ -141,7 +163,7 @@ export default createRule({
     },
     messages: {
       noLazyUnknown:
-        'Do not use `unknown` here. Replace with the actual type — check the entity class, interface, or function return type. If this is a generic data container, use `Record<string, string | number | boolean | null>` or define an interface.',
+        'Do not use `unknown` here. Replace with the actual type — check the entity class, interface, or function return type.',
     },
     schema: [],
   },
