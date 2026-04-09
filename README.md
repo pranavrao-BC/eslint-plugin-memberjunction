@@ -2,7 +2,7 @@
 
 ESLint plugin for [MemberJunction](https://github.com/MemberJunction/MJ) conventions — **25 rules** for entity access, RunView patterns, Angular best practices, type safety, and architecture. Plus 2 Stylelint rules and 4 SQL migration checks.
 
-392 tests. Validated against the full MJ monorepo (2,383 files) with <0.1% false positive rate.
+394 tests. Validated against the full MJ monorepo (2,383 files) with <0.1% false positive rate.
 
 ## Install
 
@@ -62,7 +62,7 @@ export default [
 
 | Config | Severity | Naming Rule | Use Case |
 |--------|----------|-------------|----------|
-| `recommended` | `warn` | off | Local development — non-blocking IDE hints |
+| `recommended` | `warn` | warn | Local development — non-blocking IDE hints |
 | `strict` | `error` | on (with exclusions) | CI — blocks PRs with violations |
 
 Both configs also enable `@typescript-eslint/no-explicit-any`.
@@ -124,7 +124,7 @@ The `strict` config excludes external-convention packages (`React/`, `AICLI/`, `
 | `no-cross-package-reexport` | warn | Re-exporting from `@memberjunction/*` in index files |
 | `no-enum-prefer-union` | warn | `enum` declarations — use union types |
 | `no-kendo-icons` | warn | `k-icon`/`k-i-*` CSS classes — use Font Awesome |
-| `member-naming-convention` | **off** | PascalCase public / camelCase private (on in `strict`) |
+| `member-naming-convention` | warn | PascalCase public / camelCase private (allows RxJS `$` suffix) |
 
 ### Stylelint (2 rules)
 
@@ -169,7 +169,7 @@ Only lint files changed in the PR:
 ## Development
 
 ```bash
-npm test            # 392 tests
+npm test            # 394 tests
 npm run build       # compile
 npm run test:watch  # watch mode
 ```
