@@ -4,15 +4,67 @@ ESLint plugin for [MemberJunction](https://github.com/MemberJunction/MJ) convent
 
 394 tests. Validated against the full MJ monorepo (2,383 files) with <0.1% false positive rate.
 
-## Install
+## Quick Start (MJ repo)
+
+From your MJ repo root:
+
+```bash
+# 1. Install (one-time)
+npm install eslint-plugin-memberjunction @typescript-eslint/parser --save-dev
+
+# 2. Create config (one-time) — paste this into eslint.config.mjs at repo root
+cat > eslint.config.mjs << 'EOF'
+import mj from 'eslint-plugin-memberjunction';
+import tsParser from '@typescript-eslint/parser';
+
+export default [
+  mj.configs.recommended,
+  {
+    files: ['packages/**/src/**/*.ts'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: { ecmaVersion: 2022, sourceType: 'module' },
+    },
+  },
+  {
+    ignores: ['**/node_modules/**', '**/dist/**', '**/generated/**', '**/__tests__/**', '**/*.d.ts'],
+  },
+];
+EOF
+
+# 3. Lint the files you changed on your branch
+npx eslint $(git diff --name-only origin/next...HEAD -- '*.ts')
+```
+
+That last command is the one you'll use day-to-day — it only lints files you touched, so you see exactly what to fix before opening a PR.
+
+### Other useful commands
+
+```bash
+# Lint uncommitted changes
+npx eslint $(git diff --name-only -- '*.ts')
+
+# Lint a specific package
+npx eslint 'packages/MJServer/src/**/*.ts'
+
+# Lint a single file
+npx eslint packages/MJCore/src/generic/baseEntity.ts
+
+# Lint everything (~30s)
+npx eslint 'packages/**/src/**/*.ts'
+```
+
+### IDE integration
+
+VS Code picks up the config automatically with the [ESLint extension](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) — you'll see yellow squiggles inline as you code.
+
+## Setup (non-MJ projects)
 
 ```bash
 npm install eslint-plugin-memberjunction --save-dev
 ```
 
-## Setup
-
-### ESLint flat config (recommended)
+### ESLint flat config
 
 ```javascript
 // eslint.config.js
@@ -20,25 +72,11 @@ import mj from 'eslint-plugin-memberjunction';
 
 export default [
   mj.configs.recommended,  // all rules as warnings
-  {
-    files: ['**/*.ts'],
-  },
+  { files: ['**/*.ts'] },
 ];
 ```
 
 Or use `mj.configs.strict` for errors (CI enforcement).
-
-### CommonJS
-
-```javascript
-// eslint.config.cjs
-const mj = require('eslint-plugin-memberjunction');
-
-module.exports = [
-  mj.configs.recommended,
-  { files: ['**/*.ts'] },
-];
-```
 
 ### Cherry-pick rules
 
