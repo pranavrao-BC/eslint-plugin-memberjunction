@@ -15,6 +15,12 @@ tester.run('for-requires-track', rule, {
     'for (const item of items) { process(item); }',
     // String that mentions @for but isn't template syntax
     'const docs = "Use @for with track for performance";',
+    // @for with nested parens in iterable (e.g. .slice(), function calls)
+    'const tpl = `@for (item of items.slice(0, 10); track item.id) { <div /> }`;',
+    'const tpl = `@for (vm of getCategories(); track vm) { <div /> }`;',
+    'const tpl = `@for (x of fn(a, b); track x.id) { <div /> }`;',
+    // @for with async pipe in parens
+    'const tpl = `@for (task of (tasks$ | async); track task) { <div /> }`;',
   ],
   invalid: [
     // @for without track

@@ -116,6 +116,82 @@ function isPassedToFunction(statements: TSESTree.Node[], varName: string): boole
   return found;
 }
 
+/**
+ * Check if a variable flows through Promise.all destructuring and the
+ * destructured target has .Success checked.
+ *
+ * Pattern: const p1 = rv.RunView(...);
+ *          const [r1, r2] = await Promise.all([p1, p2]);
+ *          if (r1.Success) { ... }
+ *
+ * Returns true if varName appears in a Promise.all array and the
+ * corresponding destructured variable has .Success accessed.
+ */
+function isCheckedViaPromiseAll(statements: TSESTree.Node[], varName: string): boolean {
+  let found = false;
+
+  function walk(node: TSESTree.Node) {
+    if (found) return;
+
+    // Look for: const [a, b] = await Promise.all([p1, p2])
+    if (
+      node.type === AST_NODE_TYPES.VariableDeclarator &&
+      node.id.type === AST_NODE_TYPES.ArrayPattern
+    ) {
+      // Unwrap await
+      let init = node.init;
+      if (init?.type === AST_NODE_TYPES.AwaitExpression) {
+        init = init.argument;
+      }
+
+      // Check for Promise.all/allSettled call
+      if (
+        init?.type === AST_NODE_TYPES.CallExpression &&
+        init.callee.type === AST_NODE_TYPES.MemberExpression &&
+        init.callee.object.type === AST_NODE_TYPES.Identifier &&
+        init.callee.object.name === 'Promise' &&
+        init.callee.property.type === AST_NODE_TYPES.Identifier &&
+        (init.callee.property.name === 'all' || init.callee.property.name === 'allSettled')
+      ) {
+        const firstArg = init.arguments[0];
+        if (firstArg?.type === AST_NODE_TYPES.ArrayExpression) {
+          // Find varName's index in the array
+          const idx = firstArg.elements.findIndex(
+            (el) => el?.type === AST_NODE_TYPES.Identifier && el.name === varName,
+          );
+          if (idx >= 0 && idx < node.id.elements.length) {
+            const destEl = node.id.elements[idx];
+            if (destEl?.type === AST_NODE_TYPES.Identifier) {
+              // Check if the destructured variable has .Success accessed
+              if (hasSuccessAccess(statements, destEl.name)) {
+                found = true;
+                return;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    for (const key of Object.keys(node)) {
+      if (key === 'parent') continue;
+      const child = (node as unknown as Record<string, unknown>)[key];
+      if (child && typeof child === 'object') {
+        if (Array.isArray(child)) {
+          for (const item of child) {
+            if (item && typeof item.type === 'string') walk(item as TSESTree.Node);
+          }
+        } else if ('type' in (child as object)) {
+          walk(child as TSESTree.Node);
+        }
+      }
+    }
+  }
+
+  for (const stmt of statements) walk(stmt);
+  return found;
+}
+
 /** Check if a variable is returned anywhere in the statement list. */
 function isReturned(statements: TSESTree.Node[], varName: string): boolean {
   let found = false;
@@ -223,6 +299,9 @@ export default createRule<[], 'uncheckedSuccess' | 'discardedResult'>({
           // If returned, caller's responsibility
           if (isReturned(fnBody, varName)) return;
 
+          // If flows through Promise.all and destructured target has .Success
+          if (isCheckedViaPromiseAll(fnBody, varName)) return;
+
           context.report({ node, messageId: 'uncheckedSuccess' });
           return;
         }
@@ -239,6 +318,7 @@ export default createRule<[], 'uncheckedSuccess' | 'discardedResult'>({
           if (hasSuccessAccess(fnBody, varName)) return;
           if (isPassedToFunction(fnBody, varName)) return;
           if (isReturned(fnBody, varName)) return;
+          if (isCheckedViaPromiseAll(fnBody, varName)) return;
 
           context.report({ node, messageId: 'uncheckedSuccess' });
           return;

@@ -5,6 +5,21 @@ import { AST_NODE_TYPES, TSESTree } from '@typescript-eslint/utils';
 const MUTATION_METHODS = new Set(['Save', 'Delete', 'Load', 'Validate', 'SetMany']);
 
 /**
+ * Array methods on Results that constitute safe inline consumption.
+ * These either return non-entity values (map → derived array, some → boolean)
+ * or are standard iteration patterns that don't require full BaseEntity instances.
+ */
+const SAFE_ARRAY_METHODS = new Set([
+  'map', 'filter', 'find', 'findIndex', 'some', 'every', 'reduce',
+  'forEach', 'flatMap', 'slice', 'includes', 'indexOf', 'join',
+]);
+
+/** Properties on the RunView result that are metadata, not entity data. */
+const RESULT_METADATA_PROPS = new Set([
+  'Success', 'ErrorMessage', 'RowCount', 'UserViewRunID', 'LogStatus',
+]);
+
+/**
  * Check if a RunView params object has ResultType: 'entity_object'.
  * Returns the Property node for the ResultType if found, null otherwise.
  */
@@ -109,202 +124,138 @@ function hasMutationCall(statements: TSESTree.Statement[]): boolean {
 }
 
 /**
- * Check if an expression is the result variable or its .Results property
- * (but NOT a derived value like .Results.map(...) or .Results.length).
+ * Check if a `result.Results` member expression is consumed via a safe
+ * inline pattern that doesn't require full BaseEntity instances.
  *
- * Matches: `result`, `result.Results`, `result.Results[0]`, `result.Results || []`
- * Does NOT match: `result.Results.map(...)`, `result.Results.length`, `result.Success`
+ * Safe patterns:
+ * - result.Results.length
+ * - result.Results.map/filter/forEach/...(callback)
+ * - result.Results[i].Field (property read, not mutation or assignment)
  */
-function isEntityReference(node: TSESTree.Node, varName: string): boolean {
-  // Direct: result
-  if (node.type === AST_NODE_TYPES.Identifier && node.name === varName) return true;
+function isResultsAccessSafe(resultsNode: TSESTree.MemberExpression): boolean {
+  const parent = resultsNode.parent;
+  if (!parent) return false;
 
-  // result.Results
+  // result.Results.length
   if (
-    node.type === AST_NODE_TYPES.MemberExpression &&
-    node.object.type === AST_NODE_TYPES.Identifier &&
-    node.object.name === varName &&
-    node.property.type === AST_NODE_TYPES.Identifier &&
-    node.property.name === 'Results'
-  ) return true;
-
-  // result.Results[0] or result.Results[i]
-  if (
-    node.type === AST_NODE_TYPES.MemberExpression &&
-    node.computed &&
-    node.object.type === AST_NODE_TYPES.MemberExpression &&
-    node.object.object.type === AST_NODE_TYPES.Identifier &&
-    node.object.object.name === varName &&
-    node.object.property.type === AST_NODE_TYPES.Identifier &&
-    node.object.property.name === 'Results'
-  ) return true;
-
-  // result.Results || [] (LogicalExpression)
-  if (
-    node.type === AST_NODE_TYPES.LogicalExpression &&
-    isEntityReference(node.left, varName)
-  ) return true;
-
-  // result.Results ?? [] (same)
-  if (
-    node.type === AST_NODE_TYPES.LogicalExpression &&
-    isEntityReference(node.left, varName)
-  ) return true;
-
-  return false;
-}
-
-/**
- * Check if an AST subtree contains any reference to the given variable name.
- */
-function referencesVar(node: TSESTree.Node, varName: string): boolean {
-  let found = false;
-  walkNodes([node], (n) => {
-    if (found) return true;
-    if (n.type === AST_NODE_TYPES.Identifier && n.name === varName) {
-      found = true;
-      return true;
-    }
-  });
-  return found;
-}
-
-/**
- * Check if the RunView result is returned or passed to another function
- * (in which case mutation may happen elsewhere).
- *
- * Uses strict matching for function arguments (only direct entity references)
- * and broad matching for returns and property assignments (any mention of the
- * result variable, since entity objects may escape through chains like .sort()).
- */
-function resultMayEscape(statements: TSESTree.Statement[], varName: string): boolean {
-  let escapes = false;
-  walkNodes(statements, (node) => {
-    if (escapes) return true;
-
-    // Returned — broad check: any return mentioning the variable
-    // Covers: return result, return result.Results, return result.Results[0],
-    // return { companyIntegration } where companyIntegration came from result
-    if (
-      node.type === AST_NODE_TYPES.ReturnStatement &&
-      node.argument &&
-      referencesVar(node.argument, varName)
-    ) {
-      escapes = true;
-      return true;
-    }
-
-    // Passed as function argument — strict check: only direct entity references
-    // Avoids false positives like console.log(result.Results.length)
-    if (node.type === AST_NODE_TYPES.CallExpression) {
-      for (const arg of node.arguments) {
-        if (isEntityReference(arg, varName)) {
-          escapes = true;
-          return true;
-        }
-      }
-    }
-
-    // Assigned to a property — broad check: any mention of the variable
-    // Covers: this.entities = result.Results.sort(...), this.data = result
-    if (
-      node.type === AST_NODE_TYPES.AssignmentExpression &&
-      node.left.type === AST_NODE_TYPES.MemberExpression &&
-      referencesVar(node.right, varName)
-    ) {
-      escapes = true;
-      return true;
-    }
-  });
-  return escapes;
-}
-
-/**
- * Find variables assigned from result.Results[*] and check if they escape.
- * Catches patterns like: const entity = result.Results[0]; return entity;
- */
-function indirectResultEscapes(statements: TSESTree.Statement[], varName: string): boolean {
-  const derivedVars: string[] = [];
-
-  // Find variables assigned directly from varName.Results[*] (entity objects),
-  // but NOT from varName.Results.map/filter/etc (derived values)
-  walkNodes(statements, (node) => {
-    if (
-      node.type === AST_NODE_TYPES.VariableDeclarator &&
-      node.id.type === AST_NODE_TYPES.Identifier &&
-      node.init
-    ) {
-      const init = node.init;
-      // Direct: const entity = result.Results[0]
-      if (isEntityReference(init, varName)) {
-        derivedVars.push(node.id.name);
-        return;
-      }
-      // Conditional: const entity = result.Success ? result.Results[0] : null
-      if (init.type === AST_NODE_TYPES.ConditionalExpression) {
-        if (isEntityReference(init.consequent, varName) || isEntityReference(init.alternate, varName)) {
-          derivedVars.push(node.id.name);
-          return;
-        }
-      }
-      // Logical: const entity = result.Success && result.Results[0]
-      if (init.type === AST_NODE_TYPES.LogicalExpression && isEntityReference(init.right, varName)) {
-        derivedVars.push(node.id.name);
-        return;
-      }
-    }
-
-    // for-of loop variable: for (const item of result.Results) { ... }
-    // The loop variable `item` is derived from the result entities
-    if (
-      node.type === AST_NODE_TYPES.ForOfStatement &&
-      node.left.type === AST_NODE_TYPES.VariableDeclaration &&
-      node.left.declarations.length === 1 &&
-      node.left.declarations[0].id.type === AST_NODE_TYPES.Identifier &&
-      isEntityReference(node.right, varName)
-    ) {
-      derivedVars.push(node.left.declarations[0].id.name);
-      return;
-    }
-  });
-
-  // Check if any derived variable escapes
-  for (const dVar of derivedVars) {
-    let escapes = false;
-    walkNodes(statements, (node) => {
-      if (escapes) return true;
-      // Returned (directly or in an object)
-      if (node.type === AST_NODE_TYPES.ReturnStatement && node.argument) {
-        if (referencesVar(node.argument, dVar)) {
-          escapes = true;
-          return true;
-        }
-      }
-      // Passed as function argument
-      if (node.type === AST_NODE_TYPES.CallExpression) {
-        for (const arg of node.arguments) {
-          if (
-            arg.type === AST_NODE_TYPES.Identifier && arg.name === dVar
-          ) {
-            escapes = true;
-            return true;
-          }
-        }
-      }
-      // Assigned to this.*
-      if (
-        node.type === AST_NODE_TYPES.AssignmentExpression &&
-        node.left.type === AST_NODE_TYPES.MemberExpression &&
-        referencesVar(node.right, dVar)
-      ) {
-        escapes = true;
-        return true;
-      }
-    });
-    if (escapes) return true;
+    parent.type === AST_NODE_TYPES.MemberExpression &&
+    parent.object === resultsNode &&
+    !parent.computed &&
+    parent.property.type === AST_NODE_TYPES.Identifier &&
+    parent.property.name === 'length'
+  ) {
+    return true;
   }
 
+  // result.Results.map(...), .forEach(...), etc. — must be called
+  if (
+    parent.type === AST_NODE_TYPES.MemberExpression &&
+    parent.object === resultsNode &&
+    !parent.computed &&
+    parent.property.type === AST_NODE_TYPES.Identifier &&
+    SAFE_ARRAY_METHODS.has(parent.property.name) &&
+    parent.parent?.type === AST_NODE_TYPES.CallExpression &&
+    parent.parent.callee === parent
+  ) {
+    return true;
+  }
+
+  // result.Results[i].Field — indexed access + property read
+  if (
+    parent.type === AST_NODE_TYPES.MemberExpression &&
+    parent.object === resultsNode &&
+    parent.computed
+  ) {
+    const grandparent = parent.parent;
+    if (
+      grandparent?.type === AST_NODE_TYPES.MemberExpression &&
+      grandparent.object === parent &&
+      !grandparent.computed &&
+      grandparent.property.type === AST_NODE_TYPES.Identifier
+    ) {
+      const fieldName = grandparent.property.name;
+      // Not a mutation method call: result.Results[0].Save()
+      if (
+        MUTATION_METHODS.has(fieldName) &&
+        grandparent.parent?.type === AST_NODE_TYPES.CallExpression &&
+        grandparent.parent.callee === grandparent
+      ) {
+        return false;
+      }
+      // Not a property assignment: result.Results[0].Name = 'x'
+      if (
+        grandparent.parent?.type === AST_NODE_TYPES.AssignmentExpression &&
+        grandparent.parent.left === grandparent
+      ) {
+        return false;
+      }
+      return true;
+    }
+    // result.Results[i] alone without property access — entity escapes
+    return false;
+  }
+
+  // Anything else (return, assignment, function arg, for-of, spread, etc.)
   return false;
+}
+
+/**
+ * Whitelist check: is every reference to the result variable a safe inline
+ * consumption that doesn't require entity_object?
+ *
+ * This is the "whitelist" approach: we enumerate the small set of patterns
+ * that are obviously safe, and suppress everything else. If ANY reference
+ * doesn't match a known-safe pattern, we return false (suppress the warning).
+ *
+ * The alternative (blacklist) tries to enumerate every way data can escape
+ * and always has gaps. The whitelist is stable — a .map() that returns
+ * strings is always safe, regardless of what the rest of the function does.
+ */
+function isResultConsumedSafely(
+  statements: TSESTree.Statement[],
+  varName: string,
+): boolean {
+  let allSafe = true;
+
+  walkNodes(statements, (node) => {
+    if (!allSafe) return true;
+
+    if (node.type !== AST_NODE_TYPES.Identifier || node.name !== varName) return;
+
+    const parent = node.parent;
+    if (!parent) { allSafe = false; return true; }
+
+    // Skip declaration/assignment target: const result = ..., result = ...
+    if (parent.type === AST_NODE_TYPES.VariableDeclarator && parent.id === node) return;
+    if (parent.type === AST_NODE_TYPES.AssignmentExpression && parent.left === node) return;
+
+    // Must be used as object of a member expression: result.Something
+    if (parent.type !== AST_NODE_TYPES.MemberExpression || parent.object !== node) {
+      allSafe = false;
+      return true;
+    }
+
+    const prop = parent.property;
+    if (prop.type !== AST_NODE_TYPES.Identifier) { allSafe = false; return true; }
+
+    // result.Success, result.ErrorMessage, etc. — metadata reads
+    if (RESULT_METADATA_PROPS.has(prop.name)) return;
+
+    // result.Results — check downstream consumption
+    if (prop.name === 'Results') {
+      if (!isResultsAccessSafe(parent)) {
+        allSafe = false;
+        return true;
+      }
+      return;
+    }
+
+    // Any other property on result — unknown usage, suppress
+    allSafe = false;
+    return true;
+  });
+
+  return allSafe;
 }
 
 /**
@@ -365,20 +316,20 @@ export default createRule({
         const fnBody = getEnclosingFunctionBody(node);
         if (!fnBody) return;
 
-        // If any mutation method is called anywhere in the function, don't flag.
-        // Conservative: avoids false positives when mutation happens on a different
-        // variable but in the same function scope.
+        // Tier 2 gate: if any mutation method exists anywhere in the function,
+        // entity_object may be justified. Suppress.
         if (hasMutationCall(fnBody)) return;
 
-        // If the result variable escapes the function (returned, passed as arg),
-        // mutation may happen elsewhere — don't flag.
+        // Need a variable name to analyze usage patterns.
+        // If we can't determine it (destructuring, bare expression), suppress.
         const varName = getResultVarName(node);
-        if (varName && resultMayEscape(fnBody, varName)) return;
+        if (!varName) return;
 
-        // Check indirect escape: variables assigned from result.Results[*] that then escape
-        if (varName && indirectResultEscapes(fnBody, varName)) return;
+        // Whitelist: only flag if EVERY reference to the result is a safe
+        // inline consumption. If any reference is unknown, suppress.
+        // "Flag what you can see. Suppress what you'd have to infer."
+        if (!isResultConsumedSafely(fnBody, varName)) return;
 
-        // No mutation found — suggest using 'simple'
         context.report({
           node: resultTypeProp,
           messageId: 'preferSimple',

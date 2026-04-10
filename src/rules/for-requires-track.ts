@@ -4,7 +4,8 @@ import { TSESTree } from '@typescript-eslint/utils';
 // Match @for (...) but without a `track` keyword
 // @for (item of items; track item.id) { ... } — valid
 // @for (item of items) { ... } — invalid (missing track)
-const FOR_BLOCK_PATTERN = /@for\s*\([^)]*\)/g;
+// Supports up to 2 levels of nested parentheses, e.g. @for (x of fn(a, b); track x)
+const FOR_BLOCK_PATTERN = /@for\s*\((?:[^()]*|\((?:[^()]*|\([^)]*\))*\))*\)/g;
 const TRACK_IN_FOR = /;\s*track\s/;
 
 export default createRule({

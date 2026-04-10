@@ -10,7 +10,14 @@ function isEntitySaveOrLoad(node: TSESTree.CallExpression): string | null {
     node.callee.property.type === AST_NODE_TYPES.Identifier &&
     CHECKED_METHODS.has(node.callee.property.name)
   ) {
-    return node.callee.property.name;
+    const method = node.callee.property.name;
+    // Entity .Load() takes 0-1 args (primary key).
+    // Engine .Load(configs, provider, forceRefresh, contextUser) takes 4.
+    // Exclude multi-arg Load calls to avoid false positives on BaseEngine.Load().
+    if (method === 'Load' && node.arguments.length > 1) {
+      return null;
+    }
+    return method;
   }
   return null;
 }

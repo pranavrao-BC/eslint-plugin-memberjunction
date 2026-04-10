@@ -60,7 +60,9 @@ tester.run('prefer-simple-result-type', rule, {
       const result = await rv.RunView({ EntityName: 'Users' });
     }`,
 
-    // Result is returned — mutation may happen in caller
+    // --- Suppress: entity escapes (can't prove no downstream mutation) ---
+
+    // Result returned
     `async function load() {
       const result = await rv.RunView({
         EntityName: 'Users',
@@ -69,7 +71,7 @@ tester.run('prefer-simple-result-type', rule, {
       return result;
     }`,
 
-    // Result is passed to another function — mutation may happen there
+    // Result passed to another function
     `async function load() {
       const result = await rv.RunView({
         EntityName: 'Users',
@@ -78,7 +80,7 @@ tester.run('prefer-simple-result-type', rule, {
       processEntities(result);
     }`,
 
-    // Result assigned to a property (escapes scope)
+    // Result assigned to a property
     `async function load() {
       const result = await rv.RunView({
         EntityName: 'Users',
@@ -87,7 +89,7 @@ tester.run('prefer-simple-result-type', rule, {
       this.users = result;
     }`,
 
-    // result.Results returned (entity objects escape)
+    // result.Results returned
     `async function load() {
       const result = await rv.RunView({
         EntityName: 'Users',
@@ -96,7 +98,7 @@ tester.run('prefer-simple-result-type', rule, {
       return result.Results || [];
     }`,
 
-    // result.Results[0] returned
+    // result.Results[0] returned (entity escapes)
     `async function loadOne() {
       const result = await rv.RunView({
         EntityName: 'Users',
@@ -115,7 +117,7 @@ tester.run('prefer-simple-result-type', rule, {
       handleEntities(result.Results);
     }`,
 
-    // result assigned to this.property via Results
+    // result.Results assigned to this.property
     `async function load() {
       const result = await rv.RunView({
         EntityName: 'Users',
@@ -124,16 +126,9 @@ tester.run('prefer-simple-result-type', rule, {
       this.entities = result.Results;
     }`,
 
-    // result.Results.map stored on this — conservative escape
-    `async function load() {
-      const result = await this.rv.RunView({
-        EntityName: 'Users',
-        ResultType: 'entity_object',
-      });
-      this.names = result.Results.map(r => r.Name);
-    }`,
+    // --- Suppress: for-of binds entities to variable (can't verify safe) ---
 
-    // Entities escape via for-of loop + Map.set — mutation may happen elsewhere
+    // Entities escape via for-of loop + Map.set
     `async function loadEntities() {
       const result = await rv.RunView({
         EntityName: 'Users',
@@ -153,6 +148,79 @@ tester.run('prefer-simple-result-type', rule, {
       for (const item of result.Results) {
         processEntity(item);
       }
+    }`,
+
+    // for-of → Map.set → return (bug report pattern)
+    `async function loadVersions(rv, contextUser) {
+      const versionsResult = await rv.RunView({
+        EntityName: 'Some Entity',
+        ResultType: 'entity_object',
+      }, contextUser);
+      const versionMap = new Map();
+      for (const v of versionsResult.Results) {
+        versionMap.set(v.ID, v);
+      }
+      return versionMap;
+    }`,
+
+    // for-of variable returned directly
+    `async function loadFirst(rv) {
+      const result = await rv.RunView({
+        EntityName: 'Users',
+        ResultType: 'entity_object',
+      });
+      for (const item of result.Results) {
+        if (item.Status === 'active') return item;
+      }
+      return null;
+    }`,
+
+    // for-of + property assignment escape
+    `async function loadEntities(rv) {
+      const result = await rv.RunView({
+        EntityName: 'Users',
+        ResultType: 'entity_object',
+      });
+      for (const item of result.Results || []) {
+        this.items.push(item);
+      }
+    }`,
+
+    // --- Suppress: can't determine variable name ---
+
+    // Destructured result — Results bound to variable
+    `async function load() {
+      const { Results } = await rv.RunView({
+        EntityName: 'Users',
+        ResultType: 'entity_object',
+      });
+      return Results;
+    }`,
+
+    // --- Suppress: for-of read-only (entities bound to variable, can't verify) ---
+
+    `async function getNames(rv) {
+      const result = await rv.RunView({
+        EntityName: 'Users',
+        ResultType: 'entity_object',
+      });
+      const names = [];
+      for (const item of result.Results) {
+        names.push(item.Name);
+      }
+      return names;
+    }`,
+
+    // --- Suppress: mutation on unrelated entity in same function ---
+    // (hasMutationCall is broad — any .Save() suppresses even if unrelated)
+
+    `async function mixed() {
+      const result = await rv.RunView({
+        EntityName: 'Users',
+        ResultType: 'entity_object',
+      });
+      const names = result.Results.map(r => r.Name);
+      await otherEntity.Save();
     }`,
   ],
   invalid: [
@@ -178,7 +246,7 @@ tester.run('prefer-simple-result-type', rule, {
       }`,
       errors: [{ messageId: 'preferSimple' }],
     },
-    // Read-only: extracting IDs
+    // Read-only: extracting IDs via map
     {
       code: `async function getIds() {
         const result = await rv.RunView({
@@ -209,6 +277,43 @@ tester.run('prefer-simple-result-type', rule, {
           ResultType: 'entity_object',
         });
         result.Results.forEach(r => console.log(r.Name));
+      }`,
+      errors: [{ messageId: 'preferSimple' }],
+    },
+    // Read-only: result.Results.map assigned to this (map returns derived values, not entities)
+    {
+      code: `async function load() {
+        const result = await this.rv.RunView({
+          EntityName: 'Users',
+          ResultType: 'entity_object',
+        });
+        this.names = result.Results.map(r => r.Name);
+      }`,
+      errors: [{ messageId: 'preferSimple' }],
+    },
+    // Read-only: only metadata + length
+    {
+      code: `async function check() {
+        const result = await rv.RunView({
+          EntityName: 'Users',
+          ResultType: 'entity_object',
+        });
+        if (result.Success) {
+          console.log(result.Results.length);
+        }
+      }`,
+      errors: [{ messageId: 'preferSimple' }],
+    },
+    // Read-only: result.Results[0].Field (property read on indexed element)
+    {
+      code: `async function getFirst() {
+        const result = await rv.RunView({
+          EntityName: 'Users',
+          ResultType: 'entity_object',
+        });
+        if (result.Results.length > 0) {
+          console.log(result.Results[0].Name);
+        }
       }`,
       errors: [{ messageId: 'preferSimple' }],
     },

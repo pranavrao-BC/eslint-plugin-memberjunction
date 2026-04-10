@@ -29,6 +29,16 @@ tester.run('no-runview-in-loop', rule, {
       }
       for (const id of ids) { await loadUser(id); }
     `,
+    // Test files are ignored by default
+    {
+      code: `for (const p of params) { await rv.RunView(p); }`,
+      filename: 'src/__tests__/mock-run-view.test.ts',
+    },
+    // Mock files are ignored by default
+    {
+      code: `for (const p of params) { await rv.RunView(p); }`,
+      filename: 'src/__mocks__/mock-run-view.ts',
+    },
   ],
   invalid: [
     // for loop

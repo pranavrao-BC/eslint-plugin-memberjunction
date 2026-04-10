@@ -52,6 +52,20 @@ tester.run('runview-check-success', rule, {
       const result = await rv.RunViews([{ EntityName: 'Users' }]);
       use(result);
     }`,
+    // Promise.all destructuring — Success checked on destructured variable
+    `async function f() {
+      const p1 = rv.RunView({ EntityName: 'Users' });
+      const p2 = rv.RunView({ EntityName: 'Orders' });
+      const [r1, r2] = await Promise.all([p1, p2]);
+      if (r1.Success && r2.Success) { use(r1.Results, r2.Results); }
+    }`,
+    // Promise.allSettled with destructuring — both checked
+    `async function f() {
+      const p1 = rv.RunView({ EntityName: 'Users' });
+      const p2 = rv.RunView({ EntityName: 'Orders' });
+      const [r1, r2] = await Promise.allSettled([p1, p2]);
+      if (r1.Success && r2.Success) { use(r1.Results); }
+    }`,
   ],
   invalid: [
     // Result discarded — expression statement

@@ -52,6 +52,14 @@ tester.run('entity-save-check-result', rule, {
     `async function f() {
       await Save();
     }`,
+    // Engine .Load() with multiple args — not an entity Load
+    `async function f() {
+      await this.Load(configs, provider, false, contextUser);
+    }`,
+    // Engine super.Load() with multiple args
+    `async function f() {
+      await super.Load(configs, provider, forceRefresh, contextUser);
+    }`,
     // TransactionGroup — Save/Delete in a transaction group; individual returns are meaningless
     `async function f() {
       entity.TransactionGroup = tg;
