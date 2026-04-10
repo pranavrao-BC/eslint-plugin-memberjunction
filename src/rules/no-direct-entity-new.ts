@@ -3,15 +3,8 @@ import { AST_NODE_TYPES, TSESTree } from '@typescript-eslint/utils';
 
 const ENTITY_PATTERN = /Entity$/;
 
-// Known MJ entity base class names — classes must extend one of these to be
-// detected via the generated subclass naming convention (*Entity).
-// Non-MJ classes that happen to end in "Entity" (e.g., AutotagEntity) are
-// excluded via the allowedClassNames option.
-const TEST_FILE_PATTERN = /\.(?:test|spec)\.[tj]sx?$/;
-
 type Options = [{
   allowedClassNames?: string[];
-  ignoreTestFiles?: boolean;
 }];
 
 /** Extract class name from a NewExpression callee. */
@@ -56,10 +49,6 @@ export default createRule<Options, 'noDirectNew' | 'suggestFactory'>({
             items: { type: 'string' },
             description: 'Entity class names to allow direct instantiation (e.g., ["MockEntity"]).',
           },
-          ignoreTestFiles: {
-            type: 'boolean',
-            description: 'Skip test files (*.test.ts, *.spec.ts). Defaults to true.',
-          },
         },
         additionalProperties: false,
       },
@@ -68,11 +57,9 @@ export default createRule<Options, 'noDirectNew' | 'suggestFactory'>({
   defaultOptions: [{}],
   create(context, [options]) {
     const allowed = new Set(options.allowedClassNames ?? []);
-    const ignoreTests = options.ignoreTestFiles !== false; // default true
 
     return {
       NewExpression(node) {
-        if (ignoreTests && TEST_FILE_PATTERN.test(context.filename)) return;
         const className = getClassName(node.callee);
         if (!className) return;
         if (!ENTITY_PATTERN.test(className)) return;

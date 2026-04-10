@@ -2,8 +2,6 @@
 
 ESLint plugin for [MemberJunction](https://github.com/MemberJunction/MJ) conventions — **25 rules** for entity access, RunView patterns, Angular best practices, type safety, and architecture. Plus 2 Stylelint rules and 4 SQL migration checks.
 
-394 tests. Validated against the full MJ monorepo (2,383 files) with <0.1% false positive rate.
-
 ## Quick Start (MJ repo)
 
 From your MJ repo root:
@@ -13,34 +11,40 @@ From your MJ repo root:
 npm install eslint-plugin-memberjunction --save-dev
 
 # 2. Lint the files you changed on your branch
-npx eslint --no-eslintrc -c node_modules/eslint-plugin-memberjunction/eslintrc.mj.json \
-  $(git diff --name-only origin/next...HEAD | grep '\.ts$' | while read f; do [ -f "$f" ] && echo "$f"; done)
+npx mj-lint
 ```
 
-That's it — the config ships with the package. No files to create, no setup to maintain.
+That's it. No config files to create — everything ships with the package. `mj-lint` auto-detects your base branch and lints only files you've changed (committed, uncommitted, and new). It handles `.ts`, `.css`/`.scss`, and `.sql` migration files.
 
 ### Other useful commands
 
 ```bash
-# Shorthand — save as an alias or npm script
-MJ_LINT="npx eslint --no-eslintrc -c node_modules/eslint-plugin-memberjunction/eslintrc.mj.json"
-
-# Lint uncommitted changes
-$MJ_LINT $(git diff --name-only -- '*.ts' | while read f; do [ -f "$f" ] && echo "$f"; done)
-
 # Lint a specific package
-$MJ_LINT 'packages/MJServer/src/**/*.ts'
+npx mj-lint 'packages/MJServer/src/**/*.ts'
 
 # Lint a single file
-$MJ_LINT packages/MJCore/src/generic/baseEntity.ts
+npx mj-lint packages/MJCore/src/generic/baseEntity.ts
 
-# Lint everything (~30s)
-$MJ_LINT 'packages/**/src/**/*.ts'
+# Lint everything
+npx mj-lint --all
+
+# Diff against a specific branch
+npx mj-lint --base origin/main
 ```
 
 ### IDE integration
 
-VS Code picks up the config automatically with the [ESLint extension](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) — you'll see yellow squiggles inline as you code.
+`mj-lint` is a standalone CLI — it doesn't touch your existing eslint config. To get inline warnings in VS Code, add the MJ rules to your project's ESLint config:
+
+```javascript
+// eslint.config.js (flat config) — add to your existing config
+import mj from 'eslint-plugin-memberjunction';
+export default [mj.configs.recommended, /* ...your existing config */];
+```
+
+### Report false positives
+
+If a rule flags something that looks wrong, [open an issue](https://github.com/pranavrao-BC/eslint-plugin-memberjunction/issues/new?template=false-positive.yml) — it takes 30 seconds and helps improve the rules for everyone.
 
 ## Setup (non-MJ projects)
 
@@ -191,7 +195,7 @@ Only lint files changed in the PR:
 ## Development
 
 ```bash
-npm test            # 394 tests
+npm test            # 429 tests
 npm run build       # compile
 npm run test:watch  # watch mode
 ```

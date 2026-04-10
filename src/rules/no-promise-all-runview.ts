@@ -43,13 +43,7 @@ function countRunViewCalls(elements: TSESTree.Expression[]): number {
   return count;
 }
 
-const TEST_FILE_PATTERN = /\.(?:test|spec)\.[tj]sx?$/;
-
-type Options = [{
-  ignoreTestFiles?: boolean;
-}];
-
-export default createRule<Options, 'useRunViews'>({
+export default createRule({
   name: 'no-promise-all-runview',
   meta: {
     type: 'problem',
@@ -61,26 +55,12 @@ export default createRule<Options, 'useRunViews'>({
       useRunViews:
         'Use `rv.RunViews([...])` (plural) instead of `Promise.all` with {{count}} separate RunView calls. RunViews batches queries server-side for better performance.',
     },
-    schema: [
-      {
-        type: 'object',
-        properties: {
-          ignoreTestFiles: {
-            type: 'boolean',
-            description: 'Skip test files (*.test.ts, *.spec.ts). Defaults to true.',
-          },
-        },
-        additionalProperties: false,
-      },
-    ],
+    schema: [],
   },
-  defaultOptions: [{}],
-  create(context, [options]) {
-    const ignoreTests = options.ignoreTestFiles !== false;
+  defaultOptions: [],
+  create(context) {
     return {
       CallExpression(node) {
-        if (ignoreTests && TEST_FILE_PATTERN.test(context.filename)) return;
-
         // Match Promise.all(...) or Promise.allSettled(...)
         if (node.callee.type !== AST_NODE_TYPES.MemberExpression) return;
         if (node.callee.object.type !== AST_NODE_TYPES.Identifier) return;

@@ -1,0 +1,68 @@
+name: False Positive Report
+description: A rule flagged code that shouldn't be flagged
+title: "[false positive] "
+labels: ["false-positive"]
+body:
+  - type: dropdown
+    id: rule
+    attributes:
+      label: Rule
+      description: Which rule produced the false positive?
+      options:
+        - no-entity-get-set
+        - no-entity-spread
+        - no-direct-entity-new
+        - use-uuids-equal
+        - no-fields-with-entity-object
+        - no-runview-in-loop
+        - runview-check-success
+        - entity-save-check-result
+        - no-promise-all-runview
+        - prefer-simple-result-type
+        - no-global-provider-on-server
+        - no-legacy-template-syntax
+        - for-requires-track
+        - prefer-inject-function
+        - no-ng-on-changes
+        - no-router-in-generic
+        - require-standalone-false
+        - no-any-type
+        - no-action-call-action
+        - no-static-singleton
+        - no-cross-package-reexport
+        - no-enum-prefer-union
+        - no-kendo-icons
+        - member-naming-convention
+    validations:
+      required: true
+
+  - type: textarea
+    id: code
+    attributes:
+      label: Code that was flagged
+      description: Paste the code that triggered the warning. Include enough context to understand the pattern.
+      render: typescript
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why this is a false positive
+      description: Why is this code correct / why shouldn't it be flagged?
+    validations:
+      required: true
+
+  - type: input
+    id: file-path
+    attributes:
+      label: File path (optional)
+      description: Where in the MJ repo did this occur?
+      placeholder: packages/MJCore/src/generic/baseEntity.ts
+
+  - type: input
+    id: version
+    attributes:
+      label: Plugin version
+      description: "Run: npm ls eslint-plugin-memberjunction"
+      placeholder: 0.3.5

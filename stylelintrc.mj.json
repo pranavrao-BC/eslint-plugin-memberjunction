@@ -1,0 +1,10 @@
+{
+  "plugins": [
+    "./dist/stylelint/no-hardcoded-colors.cjs",
+    "./dist/stylelint/no-primitive-tokens.cjs"
+  ],
+  "rules": {
+    "mj/no-hardcoded-colors": true,
+    "mj/no-primitive-tokens": true
+  }
+}

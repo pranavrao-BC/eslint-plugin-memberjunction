@@ -73,13 +73,7 @@ function isInsideLoop(node: TSESTree.Node): boolean {
   return false;
 }
 
-const TEST_FILE_PATTERN = /\.(?:test|spec|mock)\.[tj]sx?$|__(?:tests|mocks)__\//;
-
-type Options = [{
-  ignoreTestFiles?: boolean;
-}];
-
-export default createRule<Options, 'noRunViewInLoop'>({
+export default createRule({
   name: 'no-runview-in-loop',
   meta: {
     type: 'problem',
@@ -91,25 +85,12 @@ export default createRule<Options, 'noRunViewInLoop'>({
       noRunViewInLoop:
         'RunView inside a loop causes N+1 queries. Use `RunViews` (plural) to batch, or load all data before the loop and filter in memory.',
     },
-    schema: [
-      {
-        type: 'object',
-        properties: {
-          ignoreTestFiles: {
-            type: 'boolean',
-            description: 'Skip test and mock files. Defaults to true.',
-          },
-        },
-        additionalProperties: false,
-      },
-    ],
+    schema: [],
   },
-  defaultOptions: [{}],
-  create(context, [options]) {
-    const ignoreTests = options.ignoreTestFiles !== false;
+  defaultOptions: [],
+  create(context) {
     return {
       CallExpression(node) {
-        if (ignoreTests && TEST_FILE_PATTERN.test(context.filename)) return;
         if (!isRunViewCall(node)) return;
         if (isInsideLoop(node)) {
           context.report({ node, messageId: 'noRunViewInLoop' });

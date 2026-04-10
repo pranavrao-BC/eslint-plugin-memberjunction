@@ -23,15 +23,6 @@ tester.run('no-promise-all-runview', rule, {
     // Promise.all with no array argument
     `const result = await Promise.all(someArray);`,
 
-    // Test files are ignored by default
-    {
-      code: `const [a, b] = await Promise.all([
-        rv.RunView({ EntityName: 'A' }),
-        rv.RunView({ EntityName: 'B' }),
-      ]);`,
-      filename: 'src/__tests__/providerBase.dedup.test.ts',
-    },
-
     // Single RunView call (no Promise.all)
     `const result = await rv.RunView({ EntityName: 'Users' });`,
 

@@ -22,21 +22,6 @@ tester.run('no-direct-entity-new', rule, {
       code: 'new TestUserEntity();',
       options: [{ allowedClassNames: ['TestUserEntity', 'MockEntity'] }],
     },
-    // Test files are ignored by default
-    {
-      code: 'new UserEntity();',
-      filename: 'packages/MJCore/src/__tests__/baseEntity.test.ts',
-    },
-    {
-      code: 'new MJAPIKeyEntity({ ID: "key-id" });',
-      filename: 'packages/APIKeys/Engine/src/APIKeyEngine.spec.ts',
-    },
-    // Explicit ignoreTestFiles: true
-    {
-      code: 'new UserEntity();',
-      filename: 'some.test.ts',
-      options: [{ ignoreTestFiles: true }],
-    },
   ],
   invalid: [
     // Direct entity instantiation
@@ -98,16 +83,6 @@ tester.run('no-direct-entity-new', rule, {
     {
       code: 'new UserEntity();',
       options: [{ allowedClassNames: ['MockEntity'] }],
-      errors: [{
-        messageId: 'noDirectNew',
-        suggestions: [{ messageId: 'suggestFactory', output: "await md.GetEntityObject<UserEntity>('User');" }],
-      }],
-    },
-    // ignoreTestFiles: false still flags in test files
-    {
-      code: 'new UserEntity();',
-      filename: 'src/__tests__/foo.test.ts',
-      options: [{ ignoreTestFiles: false }],
       errors: [{
         messageId: 'noDirectNew',
         suggestions: [{ messageId: 'suggestFactory', output: "await md.GetEntityObject<UserEntity>('User');" }],

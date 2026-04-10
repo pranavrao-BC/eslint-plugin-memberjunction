@@ -10,15 +10,18 @@
     "./sql": "./dist/sql/lint-migrations.js"
   },
   "bin": {
+    "mj-lint": "dist/cli/mj-lint.js",
     "mj-lint-sql": "dist/sql/lint-migrations.js"
   },
   "files": [
     "dist",
     "README.md",
-    "eslintrc.mj.json"
+    "eslintrc.mj.json",
+    "eslint.config.mj.cjs",
+    "stylelintrc.mj.json"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node scripts/postbuild.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "clean": "rm -rf dist",
