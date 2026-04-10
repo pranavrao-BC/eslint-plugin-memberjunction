@@ -7,6 +7,7 @@
     "dist/",
     "**/generated/**",
     "**/__tests__/**",
+    "**/__mocks__/**",
     "*.d.ts",
     "*.test.ts",
     "*.spec.ts"
@@ -31,7 +32,7 @@
     "memberjunction/no-any-type": "warn",
     "memberjunction/no-action-call-action": "warn",
     "memberjunction/no-static-singleton": "warn",
-    "memberjunction/no-cross-package-reexport": "warn",
+    "memberjunction/no-cross-package-reexport": "off",
     "memberjunction/no-enum-prefer-union": "warn",
     "memberjunction/no-kendo-icons": "warn",
     "memberjunction/member-naming-convention": ["warn", {
@@ -45,6 +46,12 @@
       "rules": {
         "memberjunction/no-global-provider-on-server": "off",
         "memberjunction/member-naming-convention": "off"
+      }
+    },
+    {
+      "files": ["packages/Actions/**/*.ts"],
+      "rules": {
+        "memberjunction/no-global-provider-on-server": "off"
       }
     }
   ]

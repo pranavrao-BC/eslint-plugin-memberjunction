@@ -74,6 +74,11 @@ tester.run('no-any-type', rule, {
     // Interface/type properties — data contract boundaries
     'interface ToolResult { success: boolean; data: unknown; }',
     'type JsonObject = { value: unknown; metadata: string; };',
+
+    // unknown[] on variables — arrays of arbitrary data
+    'const queryParams: unknown[] = [];',
+    'let rows: unknown[] = [];',
+    'const sheets: Record<string, unknown[]> = {};',
   ],
   invalid: [
     // Local variable typed unknown — lazy

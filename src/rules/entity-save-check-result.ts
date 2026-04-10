@@ -15,6 +15,89 @@ function isEntitySaveOrLoad(node: TSESTree.CallExpression): string | null {
   return null;
 }
 
+/** Find the nearest enclosing function body. */
+function getEnclosingFunctionBody(node: TSESTree.Node): TSESTree.Statement[] | null {
+  let current: TSESTree.Node | undefined = node.parent;
+  while (current) {
+    if (
+      current.type === AST_NODE_TYPES.FunctionDeclaration ||
+      current.type === AST_NODE_TYPES.FunctionExpression ||
+      current.type === AST_NODE_TYPES.ArrowFunctionExpression
+    ) {
+      const body = current.body;
+      if (body.type === AST_NODE_TYPES.BlockStatement) {
+        return body.body;
+      }
+      return null;
+    }
+    if (current.type === AST_NODE_TYPES.Program) {
+      return current.body as TSESTree.Statement[];
+    }
+    current = current.parent;
+  }
+  return null;
+}
+
+/**
+ * Check if an object has .TransactionGroup assigned in the same function body.
+ * When TransactionGroup is set, Save/Delete/Load queue rather than execute,
+ * so individual return values are meaningless.
+ */
+function hasTransactionGroupAssignment(
+  statements: TSESTree.Statement[],
+  objectText: string,
+  sourceCode: { getText(node: TSESTree.Node): string },
+): boolean {
+  let found = false;
+
+  function walk(node: TSESTree.Node): void {
+    if (found) return;
+
+    // Look for: <object>.TransactionGroup = ...
+    if (
+      node.type === AST_NODE_TYPES.AssignmentExpression &&
+      node.left.type === AST_NODE_TYPES.MemberExpression &&
+      node.left.property.type === AST_NODE_TYPES.Identifier &&
+      node.left.property.name === 'TransactionGroup' &&
+      sourceCode.getText(node.left.object) === objectText
+    ) {
+      found = true;
+      return;
+    }
+
+    // Don't descend into nested function scopes
+    if (
+      node.type === AST_NODE_TYPES.FunctionDeclaration ||
+      node.type === AST_NODE_TYPES.FunctionExpression ||
+      node.type === AST_NODE_TYPES.ArrowFunctionExpression
+    ) {
+      return;
+    }
+
+    for (const key of Object.keys(node)) {
+      if (key === 'parent') continue;
+      const child = (node as unknown as Record<string, unknown>)[key];
+      if (child && typeof child === 'object') {
+        if (Array.isArray(child)) {
+          for (const item of child) {
+            if (item && typeof item === 'object' && 'type' in item) {
+              walk(item as TSESTree.Node);
+            }
+          }
+        } else if ('type' in child) {
+          walk(child as TSESTree.Node);
+        }
+      }
+    }
+  }
+
+  for (const stmt of statements) {
+    walk(stmt);
+    if (found) break;
+  }
+  return found;
+}
+
 export default createRule<[], 'uncheckedSave' | 'uncheckedLoad' | 'uncheckedDelete'>({
   name: 'entity-save-check-result',
   meta: {
@@ -51,6 +134,17 @@ export default createRule<[], 'uncheckedSave' | 'uncheckedLoad' | 'uncheckedDele
 
         // ExpressionStatement: `await entity.Save();` — result discarded
         if (parent.type === AST_NODE_TYPES.ExpressionStatement) {
+          // Suppress if the entity has .TransactionGroup assigned in this scope.
+          // When TransactionGroup is set, individual Save/Delete/Load return values
+          // are meaningless — the transaction group's .Submit() is what matters.
+          if (node.callee.type === AST_NODE_TYPES.MemberExpression) {
+            const objectText = context.sourceCode.getText(node.callee.object);
+            const fnBody = getEnclosingFunctionBody(node);
+            if (fnBody && hasTransactionGroupAssignment(fnBody, objectText, context.sourceCode)) {
+              return;
+            }
+          }
+
           const messageId = method === 'Save' ? 'uncheckedSave' : method === 'Load' ? 'uncheckedLoad' : 'uncheckedDelete';
           context.report({ node, messageId });
           return;

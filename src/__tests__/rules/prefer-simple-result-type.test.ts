@@ -132,6 +132,28 @@ tester.run('prefer-simple-result-type', rule, {
       });
       this.names = result.Results.map(r => r.Name);
     }`,
+
+    // Entities escape via for-of loop + Map.set — mutation may happen elsewhere
+    `async function loadEntities() {
+      const result = await rv.RunView({
+        EntityName: 'Users',
+        ResultType: 'entity_object',
+      });
+      for (const item of result.Results) {
+        this.cache.set(item.ID, item);
+      }
+    }`,
+
+    // Entities escape via for-of loop + function call
+    `async function loadEntities() {
+      const result = await rv.RunView({
+        EntityName: 'Users',
+        ResultType: 'entity_object',
+      });
+      for (const item of result.Results) {
+        processEntity(item);
+      }
+    }`,
   ],
   invalid: [
     // Read-only: just mapping over results

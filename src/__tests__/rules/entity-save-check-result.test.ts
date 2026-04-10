@@ -52,6 +52,21 @@ tester.run('entity-save-check-result', rule, {
     `async function f() {
       await Save();
     }`,
+    // TransactionGroup — Save/Delete in a transaction group; individual returns are meaningless
+    `async function f() {
+      entity.TransactionGroup = tg;
+      await entity.Save();
+    }`,
+    // TransactionGroup — Delete in a transaction group
+    `async function f() {
+      entity.TransactionGroup = tg;
+      await entity.Delete();
+    }`,
+    // TransactionGroup — assignment on this.entity
+    `async function f() {
+      this.entity.TransactionGroup = tg;
+      await this.entity.Save();
+    }`,
     // Negated in if
     `async function f() {
       if (!(await entity.Save())) { handleError(); }

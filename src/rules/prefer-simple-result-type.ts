@@ -253,6 +253,19 @@ function indirectResultEscapes(statements: TSESTree.Statement[], varName: string
         return;
       }
     }
+
+    // for-of loop variable: for (const item of result.Results) { ... }
+    // The loop variable `item` is derived from the result entities
+    if (
+      node.type === AST_NODE_TYPES.ForOfStatement &&
+      node.left.type === AST_NODE_TYPES.VariableDeclaration &&
+      node.left.declarations.length === 1 &&
+      node.left.declarations[0].id.type === AST_NODE_TYPES.Identifier &&
+      isEntityReference(node.right, varName)
+    ) {
+      derivedVars.push(node.left.declarations[0].id.name);
+      return;
+    }
   });
 
   // Check if any derived variable escapes

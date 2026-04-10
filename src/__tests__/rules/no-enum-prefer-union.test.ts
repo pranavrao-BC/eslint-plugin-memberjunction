@@ -10,6 +10,10 @@ tester.run('no-enum-prefer-union', rule, {
     "type Direction = 'up' | 'down' | 'left' | 'right';",
     // Const objects are fine
     "const Status = { Active: 'active', Inactive: 'inactive' } as const;",
+    // Enums used with TypeGraphQL registerEnumType should be allowed
+    `import { registerEnumType } from 'type-graphql';
+     enum UserType { Owner = 'Owner', User = 'User' }
+     registerEnumType(UserType, { name: 'UserType' });`,
   ],
   invalid: [
     {

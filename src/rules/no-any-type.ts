@@ -99,6 +99,7 @@ function isAllowedContext(node: TSESTree.TSUnknownKeyword): boolean {
 
   // 2. Walk up through type wrappers and param wrappers to find the real context
   let current: TSESTree.Node | undefined = node.parent;
+  let walkedThroughArray = false;
   while (current) {
     const p: TSESTree.Node = current;
 
@@ -126,9 +127,12 @@ function isAllowedContext(node: TSESTree.TSUnknownKeyword): boolean {
     // is appropriate for arbitrary JSON values, tool results, etc.
     if (p.type === AST_NODE_TYPES.TSPropertySignature) return true;
 
-    // Variable initialized with JSON.parse() — unknown is the correct type
-    // since the parsed shape is genuinely unknowable at compile time
+    // Variable declarations — allow unknown in specific safe patterns
     if (p.type === AST_NODE_TYPES.VariableDeclarator) {
+      // unknown[] on variables — arrays of arbitrary data (SQL params, parsed rows)
+      if (walkedThroughArray) return true;
+
+      // JSON.parse() init — parsed shape is genuinely unknowable
       const decl = p as TSESTree.VariableDeclarator;
       if (
         decl.init?.type === AST_NODE_TYPES.CallExpression &&
@@ -145,6 +149,7 @@ function isAllowedContext(node: TSESTree.TSUnknownKeyword): boolean {
 
     // Keep walking through transparent type/param wrappers
     if (isTypeWrapper(p.type) || isParamWrapper(p.type)) {
+      if (p.type === AST_NODE_TYPES.TSArrayType) walkedThroughArray = true;
       current = p.parent;
       continue;
     }
