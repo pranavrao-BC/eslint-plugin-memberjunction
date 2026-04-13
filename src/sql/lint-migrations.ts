@@ -7,8 +7,9 @@
  * or violate MJ migration conventions.
  *
  * Usage:
- *   npx mj-lint-sql [dir]            # defaults to migrations/v5/
- *   npx mj-lint-sql migrations/v5/   # explicit path
+ *   npx mj-lint-sql [path]           # defaults to migrations/v5/
+ *   npx mj-lint-sql migrations/v5/   # lint all .sql files in directory
+ *   npx mj-lint-sql path/to/file.sql # lint a single file
  */
 
 import fs from 'fs';
@@ -180,10 +181,20 @@ function lintDirectory(dirPath: string): Violation[] {
 
 // CLI entry point
 function main() {
-  const dir = process.argv[2] || 'migrations/v5/';
-  console.log(`Linting SQL migrations in: ${dir}\n`);
+  const target = process.argv[2] || 'migrations/v5/';
 
-  const violations = lintDirectory(dir);
+  const stat = fs.existsSync(target) ? fs.statSync(target) : null;
+  if (!stat) {
+    console.error(`Path not found: ${target}`);
+    process.exit(1);
+  }
+
+  const violations = stat.isFile()
+    ? lintFile(target)
+    : lintDirectory(target);
+
+  const label = stat.isFile() ? target : `SQL migrations in: ${target}`;
+  console.log(`Linting ${label}\n`);
 
   if (violations.length === 0) {
     console.log('No issues found.');
