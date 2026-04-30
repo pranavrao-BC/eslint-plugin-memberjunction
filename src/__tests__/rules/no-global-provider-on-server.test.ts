@@ -27,7 +27,6 @@ tester.run('no-global-provider-on-server', rule, {
 
     // --- Other class constructors not checked ---
     'new SomeOtherClass();',
-    'new Metadata();',
   ],
   invalid: [
     // --- new RunView() with no args ---
@@ -38,6 +37,20 @@ tester.run('no-global-provider-on-server', rule, {
     {
       code: 'const rv = new RunView();',
       errors: [{ messageId: 'noProviderRunView' }],
+    },
+
+    // --- new Metadata() always resolves to the global provider ---
+    {
+      code: 'new Metadata();',
+      errors: [{ messageId: 'noNewMetadata' }],
+    },
+    {
+      code: 'const md = new Metadata();',
+      errors: [{ messageId: 'noNewMetadata' }],
+    },
+    {
+      code: 'const e = await new Metadata().GetEntityObject("Foo", user);',
+      errors: [{ messageId: 'noNewMetadata' }],
     },
 
     // --- Reading Metadata.Provider ---

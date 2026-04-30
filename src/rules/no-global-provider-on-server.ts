@@ -10,6 +10,7 @@ import { AST_NODE_TYPES, TSESTree } from '@typescript-eslint/utils';
  * permissions, potential data leakage between requests, and race conditions.
  *
  * Flagged:
+ *  - `new Metadata()` (always falls back to the global provider)
  *  - `new RunView()` with no constructor argument (falls back to global)
  *  - `Metadata.Provider` / `RunView.Provider` reads (accessing the global)
  *
@@ -33,6 +34,8 @@ export default createRule({
     messages: {
       noProviderRunView:
         'Pass the request-scoped provider to the RunView constructor: `new RunView(provider)`. Without it, RunView falls back to the global provider which is not request-safe on the server.',
+      noNewMetadata:
+        '`new Metadata()` resolves to the process-global provider. Use the request-scoped provider already in scope (e.g. `this.ProviderToUse`, resolver context, or `ExecuteAgentParams.provider`).',
       noGlobalProviderAccess:
         'Do not read the global `{{ className }}.Provider` — use the request-scoped provider from the resolver context or `ExecuteAgentParams.provider`.',
     },
@@ -42,12 +45,15 @@ export default createRule({
   create(context) {
     return {
       NewExpression(node) {
-        if (
-          node.callee.type === AST_NODE_TYPES.Identifier &&
-          node.callee.name === 'RunView' &&
-          node.arguments.length === 0
-        ) {
+        if (node.callee.type !== AST_NODE_TYPES.Identifier) return;
+
+        if (node.callee.name === 'RunView' && node.arguments.length === 0) {
           context.report({ node, messageId: 'noProviderRunView' });
+          return;
+        }
+
+        if (node.callee.name === 'Metadata') {
+          context.report({ node, messageId: 'noNewMetadata' });
         }
       },
 
